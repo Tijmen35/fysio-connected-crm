@@ -42,7 +42,7 @@ export function countTemplateVariables(template: WhatsAppTemplate | undefined): 
   let count = 0;
   for (const comp of template.components) {
     if ((comp.type === "BODY" || comp.type === "body") && comp.text) {
-      const matches = Array.from(comp.text.matchAll(/\{\{([^}]+)\}\}/g));
+      const matches = Array.from(comp.text.matchAll(/\{\{([^}]+)\}\}/g)) as RegExpMatchArray[];
       count += matches.length;
     }
   }
@@ -69,7 +69,7 @@ export async function sendWhatsAppTemplate(to: string, templateName: string, pat
     if (t) {
       for (const comp of t.components || []) {
         if ((comp.type === "BODY" || comp.type === "body") && comp.text) {
-          const matches = Array.from(comp.text.matchAll(/\{\{([^}]+)\}\}/g));
+          const matches = Array.from(comp.text.matchAll(/\{\{([^}]+)\}\}/g)) as RegExpMatchArray[];
           for (const match of matches) foundVars.push(match[1]);
         }
       }
