@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function Sidebar() {
+export function Sidebar({ userProfile }: { userProfile?: any }) {
   const pathname = usePathname();
+
+  // Haal naam op of gebruik fallback
+  const userName = userProfile?.full_name || "Gebruiker";
+  const userRole = userProfile?.role === "admin" ? "Beheerder" : "Behandelaar";
+  const initial = userName.charAt(0).toUpperCase();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 flex flex-col justify-between transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out">
@@ -38,13 +43,13 @@ export function Sidebar() {
             <span>Patiënten</span>
           </Link>
           <Link 
-            href="/belvoorraden" 
+            href="/bellijsten" 
             className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/belvoorraden" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+              pathname === "/bellijsten" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
             }`}
           >
             <i className="fa-solid fa-phone-volume text-lg w-5"></i>
-            <span>Belvoorraden</span>
+            <span>Bellijsten</span>
           </Link>
           <Link 
             href="/werknemers" 
@@ -71,7 +76,7 @@ export function Sidebar() {
             }`}
           >
             <i className="fa-solid fa-sliders text-lg w-5"></i>
-            <span>Proces & automatisering</span>
+            <span>Proces & Automatisering</span>
           </Link>
 
 
@@ -122,13 +127,21 @@ export function Sidebar() {
       {/* Sidebar Footer User Panel */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/20">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full border border-slate-700 bg-slate-800 flex items-center justify-center text-white">S</div>
+          <div className="w-10 h-10 rounded-full border border-slate-700 bg-slate-800 flex items-center justify-center text-white">{initial}</div>
           <div className="overflow-hidden">
-            <p className="text-sm font-semibold text-white truncate">Sanne de Jong</p>
-            <p className="text-xs text-slate-400 truncate">Systeembeheerder</p>
+            <p className="text-sm font-semibold text-white truncate">{userName}</p>
+            <p className="text-xs text-slate-400 truncate">{userRole}</p>
           </div>
         </div>
-        <button className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+        <button 
+          onClick={async () => {
+            const { createClient } = await import('@/utils/supabase/client');
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.href = '/login';
+          }}
+          className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+        >
           <i className="fa-solid fa-arrow-right-from-bracket"></i>
           <span>Uitloggen</span>
         </button>

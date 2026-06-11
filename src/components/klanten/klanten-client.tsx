@@ -58,7 +58,17 @@ export function KlantenClient({ patients }: { patients: any[] }) {
                     // Extract unique pipeline names
                     const uniquePipelines = Array.from(new Set(
                       (patient.tasks || [])
-                        .map((t: any) => t.pipelines?.name)
+                        .map((t: any) => {
+                          if (typeof t.pipelines === 'string') return t.pipelines;
+                          if (typeof t.pipelines === 'object' && t.pipelines) {
+                            return Array.isArray(t.pipelines) ? t.pipelines[0]?.name : t.pipelines.name;
+                          }
+                          // Fallback to pipeline
+                          if (typeof t.pipeline === 'object' && t.pipeline) {
+                            return Array.isArray(t.pipeline) ? t.pipeline[0]?.name : t.pipeline.name;
+                          }
+                          return t.pipeline_name;
+                        })
                         .filter(Boolean)
                     )) as string[];
 

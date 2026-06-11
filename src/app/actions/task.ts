@@ -40,17 +40,21 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
   if (outcome === "afspraak") {
     // Afspraak gemaakt -> Deal Gewonnen. Stop flow.
     // We could update a patient status field here, but for now we just stop scheduling next steps.
-  } else if (outcome === "geen_interesse") {
+  } else if (outcome === "afwijzing" || outcome === "geen_interesse") {
     // Geen interesse -> Deal Verloren. Stop flow.
-  } else if (outcome === "ander_moment" && scheduleDate) {
-    // Reschedule the CURRENT step for another moment, so we don't increment step_index
+  } else if ((outcome === "terugbellen" || outcome === "ander_moment") && scheduleDate) {
+    // Reschedule the CURRENT step for another moment, outside the standard trajectory
+    const dateObj = new Date(scheduleDate);
+    const timeString = dateObj.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    
     await supabase.from("tasks").insert({
       patient_id: existingTask.patient_id,
-      pipeline_id: existingTask.pipeline_id,
-      title: currentStep?.title || existingTask.title,
+      pipeline_id: existingTask.pipeline_id, // Keep in pipeline to show in timeline
+      title: "Terugbellen",
+      description: `Bellen om ${timeString}`,
       status: "later", // UI will use scheduled_for
-      scheduled_for: new Date(scheduleDate).toISOString(),
-      step_index: currentStepIndex
+      scheduled_for: dateObj.toISOString(),
+      step_index: null
     });
   } else if (outcome === "niet_opgenomen" || outcome === "kaartje_verstuurd" || outcome === "afgerond") {
     // Advance to next step in the flow

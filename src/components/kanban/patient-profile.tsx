@@ -206,14 +206,26 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                 {(() => {
                   if (tasks.length === 0) return <p className="text-xs text-slate-400">Geen taken gevonden.</p>;
                   
-                  const uniquePipelines = Array.from(new Set(tasks.map((t: any) => t.pipeline?.name).filter(Boolean))) as string[];
-                  const pipelinesToRender = uniquePipelines.length > 0 ? uniquePipelines : ["Geen traject"];
+                  const uniquePipelines = Array.from(new Set(tasks.map((t: any) => {
+                    if (typeof t.pipeline === 'string') return t.pipeline;
+                    if (typeof t.pipeline === 'object' && t.pipeline) {
+                      return Array.isArray(t.pipeline) ? t.pipeline[0]?.name : t.pipeline.name;
+                    }
+                    return t.pipeline_name;
+                  }))) as (string | null | undefined)[];
+                  
+                  const validPipelines = uniquePipelines.filter(Boolean) as string[];
+                  const hasNullPipeline = uniquePipelines.includes(null) || uniquePipelines.includes(undefined);
+                  const pipelinesToRender = validPipelines.length > 0 ? validPipelines : [];
+                  if (hasNullPipeline) pipelinesToRender.push("Overig");
+                  if (pipelinesToRender.length === 0) pipelinesToRender.push("Geen traject");
+
                   const currentTab = activePipelineTab || pipelinesToRender[0];
 
                   return (
                     <div className="space-y-4">
                       {/* Tab Bar */}
-                      {uniquePipelines.length > 0 && (
+                      {pipelinesToRender.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {pipelinesToRender.map(pipelineName => (
                             <button
@@ -236,9 +248,15 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                       <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                         <div className="relative pl-4 space-y-6 border-l-2 border-slate-200 ml-2">
                           {(() => {
-                            const pipelineTasks = currentTab === "Geen traject" 
-                              ? tasks.filter((t: any) => !t.pipeline?.name)
-                              : tasks.filter((t: any) => t.pipeline?.name === currentTab);
+                            const pipelineTasks = currentTab === "Overig" || currentTab === "Geen traject"
+                              ? tasks.filter((t: any) => {
+                                  const pname = typeof t.pipeline === 'object' ? (Array.isArray(t.pipeline) ? t.pipeline[0]?.name : t.pipeline?.name) : t.pipeline_name;
+                                  return !pname;
+                                })
+                              : tasks.filter((t: any) => {
+                                  const pname = typeof t.pipeline === 'object' ? (Array.isArray(t.pipeline) ? t.pipeline[0]?.name : t.pipeline?.name) : t.pipeline_name;
+                                  return pname === currentTab;
+                                });
                             
                             const PIPELINE_FLOWS: Record<string, string[]> = {
                               "Leadopvolging": ["Belpoging 1 (Nieuw)", "Belpoging 2", "Belpoging 3 (Laatste poging)"],
@@ -249,7 +267,8 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
         
                             const flow = PIPELINE_FLOWS[currentTab] || [];
                             const completedTitles = pipelineTasks.map((t: any) => t.title.split(" (Gepland")[0]);
-                            const upcomingSteps = flow.filter(step => !completedTitles.some((t: string) => t.includes(step)));
+                            const hasDeviation = pipelineTasks.some((t: any) => t.title === "Terugbellen" || t.status === "closed" && t.outcome_note && (t.outcome_note.includes('afspraak') || t.outcome_note.includes('afwijzing') || t.outcome_note.includes('geen_interesse')));
+                            const upcomingSteps = hasDeviation ? [] : flow.filter(step => !completedTitles.some((t: string) => t.includes(step)));
 
                             return (
                               <>
@@ -263,28 +282,38 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                                   </div>
                                 ))}
 
-                                {pipelineTasks.map((task: any) => (
-                                  <div key={task.id} className={`relative pl-2 ${task.status === "Afgerond" ? "opacity-60" : ""}`}>
-                                    <div className="absolute -left-[15px] bg-white w-7 h-7 flex items-center justify-center rounded-full">
-                                      {task.status === "Afgerond" ? (
-                                        <i className="fa-solid fa-check text-emerald-500 bg-emerald-50 w-6 h-6 flex items-center justify-center rounded-full text-[10px]"></i>
-                                      ) : (
-                                        <div className="w-3 h-3 bg-primary rounded-full border-2 border-white shadow-sm"></div>
+                                {pipelineTasks.map((task: any) => {
+                                  const isCompleted = task.status === "Afgerond" || task.status === "closed";
+                                  const displayDate = isCompleted 
+                                    ? task.updated_at || task.created_at 
+                                    : task.scheduled_for || task.created_at;
+
+                                  return (
+                                    <div key={task.id} className={`relative pl-2 ${isCompleted ? "opacity-60" : ""}`}>
+                                      <div className="absolute -left-[15px] bg-white w-7 h-7 flex items-center justify-center rounded-full">
+                                        {isCompleted ? (
+                                          <i className="fa-solid fa-check text-emerald-500 bg-emerald-50 w-6 h-6 flex items-center justify-center rounded-full text-[10px]"></i>
+                                        ) : (
+                                          <div className="w-3 h-3 bg-primary rounded-full border-2 border-white shadow-sm"></div>
+                                        )}
+                                      </div>
+                                      <p className={`text-xs font-bold ${isCompleted ? "text-slate-500" : "text-slate-800"}`}>
+                                        {task.title}
+                                      </p>
+                                      <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                                        {isCompleted ? "Voltooid op" : "Gepland voor"} {new Date(displayDate).toLocaleDateString("nl-NL")}
+                                        {!isCompleted && task.status === "later" && task.description && (
+                                          <span className="ml-1 text-primary">({task.description.split(' ').slice(-1)[0]})</span>
+                                        )}
+                                      </p>
+                                      {task.outcome_note && (
+                                        <div className="mt-2 bg-white border border-slate-100 p-2.5 rounded-lg text-xs text-slate-600 italic">
+                                          "{task.outcome_note}"
+                                        </div>
                                       )}
                                     </div>
-                                    <p className={`text-xs font-bold ${task.status === "Afgerond" ? "text-slate-500" : "text-slate-800"}`}>
-                                      {task.title}
-                                    </p>
-                                    <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
-                                      {task.status === "Afgerond" ? "Voltooid op" : "Gepland voor"} {new Date(task.created_at).toLocaleDateString("nl-NL")}
-                                    </p>
-                                    {task.outcome_note && (
-                                      <div className="mt-2 bg-white border border-slate-100 p-2.5 rounded-lg text-xs text-slate-600 italic">
-                                        "{task.outcome_note}"
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </>
                             );
                           })()}

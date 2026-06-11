@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { formatDutchPhoneNumber } from "@/utils/format";
 
-export async function importBelvoorraad(csvText: string, listTag: string, belscript?: string) {
+export async function importBellijst(csvText: string, listTag: string, belscript?: string) {
   const supabase = await createClient();
 
   // Simple CSV parser
@@ -94,7 +94,7 @@ export async function importBelvoorraad(csvText: string, listTag: string, belscr
     if (tasksError) return { error: "Fout bij opslaan taken: " + tasksError.message };
   }
 
-  revalidatePath("/belvoorraden");
+  revalidatePath("/bellijsten");
   revalidatePath("/");
   
   return { success: true, count: patientIds.length };

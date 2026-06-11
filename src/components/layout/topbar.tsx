@@ -2,8 +2,11 @@
 
 import { useModalStore } from "@/store/modalStore";
 
-export function Topbar() {
+export function Topbar({ userProfile }: { userProfile?: any }) {
   const { openNewPatientModal } = useModalStore();
+
+  const userName = userProfile?.full_name?.split(' ')[0] || "Gebruiker";
+  const initial = userName.charAt(0).toUpperCase();
 
   return (
     <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0">
@@ -51,8 +54,8 @@ export function Topbar() {
         {/* User Profile */}
         <div className="relative">
           <button className="flex items-center gap-2.5 p-1.5 hover:bg-slate-50 rounded-xl transition-colors">
-            <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-700">S</div>
-            <span className="text-sm font-semibold text-slate-700 hidden md:block">Sanne</span>
+            <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-200 flex items-center justify-center font-bold text-slate-700">{initial}</div>
+            <span className="text-sm font-semibold text-slate-700 hidden md:block">{userName}</span>
             <i className="fa-solid fa-chevron-down text-slate-400 text-xs hidden md:block"></i>
           </button>
         </div>

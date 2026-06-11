@@ -8,13 +8,24 @@ import { useModalStore } from "@/store/modalStore";
 function TaskCard({ task, templates = [], onClick }: { task: any, templates?: any[], onClick: () => void }) {
   const [isPending, startTransition] = useTransition();
   const patientName = task.patient?.full_name || task.patient?.name || task.patientName;
-  const pipelineName = task.pipeline?.name || task.pipeline;
+  let pipelineName = task.pipeline_name || "";
+  if (typeof task.pipeline === 'string') pipelineName = task.pipeline;
+  if (typeof task.pipeline === 'object' && task.pipeline !== null) {
+    if (Array.isArray(task.pipeline)) pipelineName = task.pipeline[0]?.name || pipelineName;
+    else pipelineName = task.pipeline.name || pipelineName;
+  }
   const { openCallOutcomeModal, openNoAnswerModal } = useModalStore();
 
   // Find custom title if defined
   const stepTemplate = templates.find(
     (t: any) => t.pipeline_name === pipelineName && t.step_index === task.step_index
   );
+  
+  if (task.patient?.full_name === "Tijmen Lourens") {
+    console.log("DEBUG TIJMEN TASK:", JSON.stringify(task, null, 2));
+    console.log("DEBUG PIPELINE NAME RESOLVED:", pipelineName);
+  }
+
   const displayTitle = stepTemplate?.custom_title || task.title || task.action;
 
   return (
@@ -29,7 +40,7 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
           pipelineName === "Nazorg (Uitbehandeld)" || pipelineName === "nazorg" ? "bg-emerald-100 text-emerald-700" :
           "bg-blue-100 text-blue-700"
         }`}>
-          {pipelineName}
+          {pipelineName || 'Onbekende Pipeline'}
         </span>
       </div>
       <h4 className="font-bold text-slate-800 text-sm">{patientName}</h4>
@@ -132,7 +143,7 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
   );
 }
 
-export function KanbanBoard({ initialTasks = [], templates = [] }: { initialTasks?: any[], templates?: any[] }) {
+export function KanbanBoard({ initialTasks = [], templates = [], userName = "Collega" }: { initialTasks?: any[], templates?: any[], userName?: string }) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   const now = new Date();
@@ -192,10 +203,10 @@ export function KanbanBoard({ initialTasks = [], templates = [] }: { initialTask
                 Goedemiddag
               </span>
               <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Welkom terug bij Fysio Connected, <span>Sanne</span>!
+                Welkom terug bij Fysio Connected, <span>{userName}</span>!
               </h3>
               <p className="text-slate-300 text-sm md:text-base max-w-xl">
-                Er staan vandaag <span className="text-primary font-bold">4 openstaande taken</span> en <span className="text-primary font-bold">2 ongelezen berichten</span> op uw aandacht te wachten.
+                Er staan vandaag <span className="text-primary font-bold">{vandaagOchtend.length + vandaagMiddag.length} openstaande taken</span> op uw aandacht te wachten.
               </p>
             </div>
           </div>

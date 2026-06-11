@@ -13,10 +13,16 @@ export function CallOutcomeModal() {
 
   function handleSubmit(formData: FormData) {
     if (!activeTaskId) return;
-    const scheduleDate = formData.get("scheduleDate") as string | undefined;
+    const rawDate = formData.get("scheduleDate") as string | undefined;
+    const rawTime = formData.get("scheduleTime") as string | undefined;
+    
+    let combinedDateTime: string | undefined = undefined;
+    if (rawDate && rawTime) {
+      combinedDateTime = new Date(`${rawDate}T${rawTime}`).toISOString();
+    }
 
     startTransition(async () => {
-      const result = await advanceWorkflow(activeTaskId, outcome, scheduleDate);
+      const result = await advanceWorkflow(activeTaskId, outcome, combinedDateTime);
       if (result.success) {
         useModalStore.getState().setLastCompletedTaskId(activeTaskId);
         closeCallOutcomeModal();
@@ -81,14 +87,33 @@ export function CallOutcomeModal() {
               </div>
               
               {outcome === "terugbellen" && (
-                <div className="pl-7 pr-1 pb-1 space-y-1.5 animate-in slide-in-from-top-2 fade-in duration-200">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kies datum & tijd</label>
-                  <input 
-                    type="datetime-local" 
-                    name="scheduleDate"
-                    required={outcome === "terugbellen"}
-                    className="w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold shadow-sm"
-                  />
+                <div className="pl-7 pr-1 pb-1 space-y-3 animate-in slide-in-from-top-2 fade-in duration-200">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Datum</label>
+                      <input 
+                        type="date" 
+                        name="scheduleDate"
+                        required={outcome === "terugbellen"}
+                        className="w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold shadow-sm"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Tijd</label>
+                      <select 
+                        name="scheduleTime"
+                        required={outcome === "terugbellen"}
+                        className="w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold shadow-sm"
+                      >
+                        {Array.from({ length: 11 * 4 }).map((_, i) => {
+                          const hour = 8 + Math.floor(i / 4);
+                          const minute = (i % 4) * 15;
+                          const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                          return <option key={timeStr} value={timeStr}>{timeStr}</option>;
+                        })}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
             </label>

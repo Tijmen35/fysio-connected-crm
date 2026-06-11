@@ -37,7 +37,7 @@ export async function changeTaskType(pipelineName: string, stepIndex: number, ne
   // Determine new outcomes based on the new task type
   let newOutcomes: string[] = [];
   if (newTaskType === "call") {
-    newOutcomes = ["opgenomen", "niet_opgenomen", "ander_moment"];
+    newOutcomes = ["niet_opgenomen"]; // User requested no need to configure opgenomen
   } else {
     newOutcomes = ["afgerond"];
   }

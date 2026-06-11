@@ -74,7 +74,7 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
                       </div>
 
                       <div className="space-y-3 pl-4 border-l-2 border-slate-100">
-                        {stepTemplates.map(template => (
+                        {stepTemplates.filter(t => t.action_type === 'niet_opgenomen' || t.action_type === 'afgerond').map(template => (
                           <div key={template.id} className="flex justify-between items-start bg-white p-4 rounded-xl border border-slate-100">
                             <div className="space-y-3 max-w-xl">
                               <span className="font-bold text-slate-700 uppercase text-xs tracking-wider block">

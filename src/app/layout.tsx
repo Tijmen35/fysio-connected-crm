@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
+import { AppLayout } from "@/components/layout/app-layout";
 import { NewPatientModal } from "@/components/modals/new-patient-modal";
 import { CallOutcomeModal } from "@/components/modals/call-outcome-modal";
 import { NoAnswerModal } from "@/components/modals/no-answer-modal";
@@ -15,26 +14,31 @@ export const metadata: Metadata = {
   description: "Premium patiëntenbeheer, sales pipeline en takenbeheer.",
 };
 
-export default function RootLayout({
+import { createClient } from "@/utils/supabase/server";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  let userProfile = null;
+  if (user) {
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+    userProfile = data;
+  }
+
   return (
     <html lang="nl" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
       <body className={`${inter.variable} ${outfit.variable} font-sans bg-slate-50 text-slate-900`} suppressHydrationWarning>
-        <div className="flex h-screen bg-slate-100/50">
-          <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <Topbar />
-            <main className="flex-1 overflow-hidden">
-              {children}
-            </main>
-          </div>
-        </div>
+        <AppLayout userProfile={userProfile}>
+          {children}
+        </AppLayout>
         <NewPatientModal />
         <CallOutcomeModal />
         <NoAnswerModal />

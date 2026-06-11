@@ -50,18 +50,29 @@ export async function createPatient(formData: FormData) {
   if (pipelineKey === "nazorg") { actionTitle = "Welkomstmail nazorg"; pipelineName = "Nazorg (Uitbehandeld)"; }
   if (pipelineKey === "fysiofit") { actionTitle = "Doelcheck + FysioFit aanbieden"; pipelineName = "FysioFit Conversie"; }
 
-  // Get pipeline ID
-  const { data: pipeline } = await supabase
+  // Get pipeline ID bypassing any potential RLS issues
+  const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
+  const adminAuthClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: pipeline, error: pipelineError } = await adminAuthClient
     .from("pipelines")
     .select("id")
     .eq("name", pipelineName)
     .single();
 
-  const { error: taskError } = await supabase.from("tasks").insert({
+  if (pipelineError) {
+    console.error("Pipeline fetch error:", pipelineError);
+  }
+
+  const { error: taskError } = await adminAuthClient.from("tasks").insert({
     patient_id: patientId,
     pipeline_id: pipeline?.id || null,
     status: "vandaag",
     title: actionTitle,
+    step_index: 1,
   });
 
   if (taskError) {

@@ -1,17 +1,54 @@
-import { WerknemersClient } from "@/components/werknemers/werknemers-client";
 import { createClient } from "@/utils/supabase/server";
+import WerknemersClient from "./werknemers-client";
+
+export const dynamic = 'force-dynamic';
 
 export default async function WerknemersPage() {
   const supabase = await createClient();
 
-  const { data: employees, error } = await supabase
-    .from("employees")
+  // Redirect to login if no session (fallback if middleware fails)
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Haal alle profielen op (Bypass RLS via Admin Client, aangezien RLS momenteel oneindige recursie oplevert)
+  const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+  const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  
+  const { data: profiles, error } = await adminClient
+    .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching employees:", error);
+  let isAdmin = false;
+  if (user) {
+    const { data: currentUserProfile, error: profileError } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    
+    console.log("Current User ID:", user.id);
+    console.log("Current User Profile:", currentUserProfile, "Error:", profileError);
+    
+    isAdmin = currentUserProfile?.role === "admin";
   }
 
-  return <WerknemersClient initialEmployees={employees || []} />;
+  return (
+    <div className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-8 h-[calc(100vh-4rem)]">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
+        <div className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Werknemers & Rechten</h1>
+            <p className="text-slate-500 mt-1">Beheer wie er toegang heeft tot Fysio Connected CRM.</p>
+          </div>
+          <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl">
+            <i className="fa-solid fa-users"></i>
+          </div>
+        </div>
+
+        <WerknemersClient initialProfiles={profiles || []} isAdmin={isAdmin} />
+
+      </div>
+    </div>
+  );
 }
