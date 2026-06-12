@@ -97,7 +97,9 @@ export function IntegratiesClient({ webhookConfigs = [], pipelines = [] }: { web
         setFormData({
           name: "",
           pipeline_id: pipelines.length > 0 ? pipelines[0].id : "",
-          field_mapping: { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
+          field_mapping: selectedIntegration.id === "facebook" 
+            ? { full_name: "full_name", phone: "phone_number", email: "email", location: "", primary_complaint: "", _static_location: "" }
+            : { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
         });
       } else {
         alert("Fout bij opslaan: " + res.error);
@@ -200,7 +202,9 @@ export function IntegratiesClient({ webhookConfigs = [], pipelines = [] }: { web
                         setFormData({
                           name: "",
                           pipeline_id: pipelines.length > 0 ? pipelines[0].id : "",
-                          field_mapping: { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
+                          field_mapping: selectedIntegration.id === "facebook" 
+                            ? { full_name: "full_name", phone: "phone_number", email: "email", location: "", primary_complaint: "", _static_location: "" }
+                            : { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
                         });
                         setEditingId(null);
                         setIsCreating(true);
