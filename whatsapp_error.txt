@@ -1,2 +1,0 @@
-
-[whatsapp.ts] Send Error: {"error":{"message":"Authentication Error","code":190,"type":"OAuthException","fbtrace_id":"AFKouSPKkyffqUlHDVc4Tpo"}}
