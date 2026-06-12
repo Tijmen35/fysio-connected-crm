@@ -26,7 +26,12 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
     console.log("DEBUG PIPELINE NAME RESOLVED:", pipelineName);
   }
 
-  const displayTitle = stepTemplate?.custom_title || task.title || task.action;
+  let displayTitle = stepTemplate?.custom_title || task.title || task.action;
+  
+  if (task.status === "later" && task.scheduled_for) {
+    const timeStr = new Date(task.scheduled_for).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    displayTitle = `${displayTitle} om ${timeStr}`;
+  }
 
   const now = new Date();
   const scheduledTime = task.scheduled_for ? new Date(task.scheduled_for) : new Date(0);

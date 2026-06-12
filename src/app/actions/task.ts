@@ -68,15 +68,21 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
     const dateObj = new Date(scheduleDate);
     const timeString = dateObj.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
     
-    await supabase.from("tasks").insert({
+    const adminAuthClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { error: insertErr } = await adminAuthClient.from("tasks").insert({
       patient_id: existingTask.patient_id,
       pipeline_id: existingTask.pipeline_id,
       title: "Terugbellen",
-      description: `Bellen om ${timeString}`,
       status: "later",
       scheduled_for: dateObj.toISOString(),
       step_index: null
     });
+    if (insertErr) {
+      console.error("Failed to insert Terugbellen task:", insertErr);
+    }
   } else if (outcome === "niet_opgenomen" || outcome === "kaartje_verstuurd" || outcome === "afgerond") {
     
     const { data: stepTemplate, error: tplErr } = await supabase
