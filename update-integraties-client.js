@@ -1,4 +1,6 @@
-"use client";
+import fs from 'fs';
+
+const content = `"use client";
 
 import { useState, useTransition } from "react";
 import { createWebhookConfig, deleteWebhookConfig } from "@/app/actions/integrations";
@@ -114,7 +116,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
               </div>
             )}
             
-            <div className={`w-12 h-12 rounded-xl ${integration.bg} ${integration.color} flex items-center justify-center text-2xl mb-4`}>
+            <div className={\`w-12 h-12 rounded-xl \${integration.bg} \${integration.color} flex items-center justify-center text-2xl mb-4\`}>
               <i className={integration.icon}></i>
             </div>
             
@@ -124,11 +126,11 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
             <button 
               onClick={() => setSelectedIntegration(integration)}
               disabled={integration.status === "coming_soon"}
-              className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={\`w-full py-2.5 rounded-xl text-sm font-bold transition-all \${
                 integration.status === "coming_soon" 
                   ? "bg-slate-50 text-slate-400 cursor-not-allowed" 
                   : "bg-primary/10 text-primary-800 hover:bg-primary hover:text-slate-900"
-              }`}
+              }\`}
             >
               {integration.status === "coming_soon" ? "Nog niet beschikbaar" : "Instellingen & Webhook"}
             </button>
@@ -142,7 +144,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg ${selectedIntegration.bg} ${selectedIntegration.color} flex items-center justify-center`}>
+                <div className={\`w-8 h-8 rounded-lg \${selectedIntegration.bg} \${selectedIntegration.color} flex items-center justify-center\`}>
                   <i className={selectedIntegration.icon}></i>
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg">{selectedIntegration.name} Instellingen</h3>
@@ -172,7 +174,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                   ) : (
                     <div className="space-y-4">
                       {webflowConfigs.map(config => {
-                        const url = `https://fysioconnected.nl/api/webhooks/webflow/${config.id}`;
+                        const url = \`https://fysioconnected.nl/api/webhooks/webflow/\${config.id}\`;
                         return (
                           <div key={config.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
@@ -330,3 +332,6 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/integraties/integraties-client.tsx', content);

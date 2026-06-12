@@ -115,7 +115,15 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
               <h3 className="font-bold text-slate-900 text-lg">
                 {isLoading ? "Laden..." : patient?.full_name || "Patiënt"}
               </h3>
-              <p className="text-xs text-slate-500 font-semibold">Patiëntprofiel</p>
+              <p className="text-xs text-slate-500 font-semibold">
+                Patiëntprofiel
+                {patient?.source && (
+                  <>
+                    <span className="mx-1.5 opacity-50">&bull;</span>
+                    <span className="text-slate-400">Bron: {patient.source}</span>
+                  </>
+                )}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">

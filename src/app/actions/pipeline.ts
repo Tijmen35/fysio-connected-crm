@@ -26,5 +26,15 @@ export async function updatePipelineStage(patientId: string, newStage: string, l
   }
 
   revalidatePath("/");
+  revalidatePath("/");
   return { success: true };
+}
+
+export async function getPipelines() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("pipelines").select("*").order("name");
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true, data };
 }

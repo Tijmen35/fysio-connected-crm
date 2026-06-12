@@ -1,0 +1,103 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+// We use the service role key to bypass RLS in the webhook
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: configId } = await params;
+    const body = await request.json();
+
+    // 1. Fetch webhook config
+    const { data: config, error: configError } = await supabaseAdmin
+      .from("webhook_configs")
+      .select("*")
+      .eq("id", configId)
+      .eq("is_active", true)
+      .single();
+
+    if (configError || !config) {
+      console.error("Webhook config not found or inactive:", configId);
+      return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
+    }
+
+    // 2. Map fields based on configuration
+    const mapping = config.field_mapping || {};
+    const extractField = (crmField: string) => {
+      const webflowFieldName = mapping[crmField];
+      if (!webflowFieldName) return null;
+      return body[webflowFieldName] || body.data?.[webflowFieldName] || null;
+    };
+
+    const patientData = {
+      full_name: extractField("full_name") || "Onbekende Lead",
+      phone: extractField("phone"),
+      email: extractField("email"),
+      location: extractField("location"),
+      primary_complaint: extractField("primary_complaint"),
+      source: `Webflow formulier (${config.name})`
+    };
+
+    // 3. Upsert or insert patient
+    let patientId;
+    
+    // Simple check: see if a patient with this email or phone exists
+    let existingQuery = supabaseAdmin.from("patients").select("id");
+    if (patientData.email && patientData.phone) {
+      existingQuery = existingQuery.or(`email.eq."${patientData.email}",phone.eq."${patientData.phone}"`);
+    } else if (patientData.email) {
+      existingQuery = existingQuery.eq("email", patientData.email);
+    } else if (patientData.phone) {
+      existingQuery = existingQuery.eq("phone", patientData.phone);
+    } else {
+      // If we have neither email nor phone, we can't accurately match. We'll just create a new one.
+      existingQuery = existingQuery.eq("id", "00000000-0000-0000-0000-000000000000"); // matches nothing
+    }
+
+    const { data: existingPatients } = await existingQuery;
+
+    if (existingPatients && existingPatients.length > 0) {
+      // Update existing patient
+      patientId = existingPatients[0].id;
+      await supabaseAdmin.from("patients").update(patientData).eq("id", patientId);
+    } else {
+      // Insert new patient
+      const { data: newPatient, error: insertError } = await supabaseAdmin
+        .from("patients")
+        .insert(patientData)
+        .select("id")
+        .single();
+        
+      if (insertError) {
+        console.error("Error creating patient:", insertError);
+        return NextResponse.json({ error: "Database error" }, { status: 500 });
+      }
+      patientId = newPatient.id;
+    }
+
+    // 4. Create first task in the correct pipeline
+    if (config.pipeline_id) {
+      const { error: taskError } = await supabaseAdmin.from("tasks").insert({
+        patient_id: patientId,
+        pipeline_id: config.pipeline_id,
+        title: "Nieuwe lead opvolgen",
+        status: "belvoorraad" // So it appears correctly in kanban
+      });
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Webhook processing error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
