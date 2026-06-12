@@ -300,10 +300,12 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                                     : task.scheduled_for || task.created_at;
 
                                   return (
-                                    <div key={task.id} className={`relative pl-6 ${isCompleted ? "opacity-60" : ""}`}>
+                                    <div key={task.id} className="relative pl-6">
                                       <div className="absolute -left-[15px] bg-white w-7 h-7 flex items-center justify-center rounded-full">
                                         {isCompleted ? (
-                                          <i className="fa-solid fa-check text-emerald-500 bg-emerald-50 w-6 h-6 flex items-center justify-center rounded-full text-[10px]"></i>
+                                          <div className="bg-emerald-50 w-6 h-6 flex items-center justify-center rounded-full">
+                                            <i className="fa-solid fa-check text-emerald-500 text-[10px]"></i>
+                                          </div>
                                         ) : (
                                           <div className="w-3 h-3 bg-primary rounded-full border-2 border-white shadow-sm"></div>
                                         )}
