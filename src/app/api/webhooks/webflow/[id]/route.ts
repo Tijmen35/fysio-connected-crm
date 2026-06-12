@@ -16,23 +16,28 @@ export async function POST(
     
     // Read raw text first to avoid JSON parse errors
     const rawText = await request.text();
-    
     let body: any = {};
     try {
       body = JSON.parse(rawText);
     } catch (e) {
-      // If it's not JSON, maybe it's URL encoded
       const urlParams = new URLSearchParams(rawText);
       body = Object.fromEntries(urlParams.entries());
     }
-
-    // DEBUG LOGGING
-    await supabaseAdmin.from("patients").insert({
-      full_name: "WEBHOOK RAW LOG",
-      phone: "0000000000",
-      email: "log@webhook.com",
-      source: rawText.substring(0, 255) // Save raw text to see exactly what we got
-    });
+    
+    const payloadObj = body.payload || body;
+    
+    // Lowercase all keys for case-insensitive matching
+    const lowerBody: Record<string, any> = {};
+    if (payloadObj) {
+      for (const [k, v] of Object.entries(payloadObj)) {
+        lowerBody[k.toLowerCase()] = v;
+      }
+      if (payloadObj.data && typeof payloadObj.data === 'object') {
+        for (const [k, v] of Object.entries(payloadObj.data)) {
+          lowerBody[k.toLowerCase()] = v;
+        }
+      }
+    }
 
     // 1. Fetch webhook config
     const { data: config, error: configError } = await supabaseAdmin
@@ -49,19 +54,6 @@ export async function POST(
 
     // 2. Map fields based on configuration
     const mapping = config.field_mapping || {};
-    
-    // Lowercase all keys in body and body.data for case-insensitive matching
-    const lowerBody: Record<string, any> = {};
-    if (body) {
-      for (const [k, v] of Object.entries(body)) {
-        lowerBody[k.toLowerCase()] = v;
-      }
-      if (body.data && typeof body.data === 'object') {
-        for (const [k, v] of Object.entries(body.data)) {
-          lowerBody[k.toLowerCase()] = v;
-        }
-      }
-    }
 
     const extractField = (crmField: string) => {
       const webflowFieldName = mapping[crmField];
