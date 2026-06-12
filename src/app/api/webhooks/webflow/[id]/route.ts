@@ -13,7 +13,26 @@ export async function POST(
 ) {
   try {
     const { id: configId } = await params;
-    const body = await request.json();
+    
+    // Read raw text first to avoid JSON parse errors
+    const rawText = await request.text();
+    
+    let body: any = {};
+    try {
+      body = JSON.parse(rawText);
+    } catch (e) {
+      // If it's not JSON, maybe it's URL encoded
+      const urlParams = new URLSearchParams(rawText);
+      body = Object.fromEntries(urlParams.entries());
+    }
+
+    // DEBUG LOGGING
+    await supabaseAdmin.from("patients").insert({
+      full_name: "WEBHOOK RAW LOG",
+      phone: "0000000000",
+      email: "log@webhook.com",
+      source: rawText.substring(0, 255) // Save raw text to see exactly what we got
+    });
 
     // 1. Fetch webhook config
     const { data: config, error: configError } = await supabaseAdmin
