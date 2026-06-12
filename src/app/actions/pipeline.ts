@@ -31,8 +31,12 @@ export async function updatePipelineStage(patientId: string, newStage: string, l
 }
 
 export async function getPipelines() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("pipelines").select("*").order("name");
+  const adminAuthClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  
+  const { data, error } = await adminAuthClient.from("pipelines").select("*").order("name");
   if (error) {
     return { success: false, error: error.message };
   }

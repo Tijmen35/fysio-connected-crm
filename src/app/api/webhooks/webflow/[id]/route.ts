@@ -40,7 +40,7 @@ export async function POST(
       full_name: extractField("full_name") || "Onbekende Lead",
       phone: extractField("phone"),
       email: extractField("email"),
-      location: extractField("location"),
+      location: mapping._static_location || extractField("location"),
       primary_complaint: extractField("primary_complaint"),
       source: `Webflow formulier (${config.name})`
     };

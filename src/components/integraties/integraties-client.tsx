@@ -49,7 +49,18 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
   // Create Webhook state
   const [isCreating, setIsCreating] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    pipeline_id: string;
+    field_mapping: {
+      full_name: string;
+      phone: string;
+      email: string;
+      location: string;
+      primary_complaint: string;
+      _static_location?: string;
+    }
+  }>({
     name: "",
     pipeline_id: pipelines.length > 0 ? pipelines[0].id : "",
     field_mapping: {
@@ -57,7 +68,8 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
       phone: "phone",
       email: "email",
       location: "",
-      primary_complaint: ""
+      primary_complaint: "",
+      _static_location: ""
     }
   });
 
@@ -272,14 +284,17 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Locatie</label>
-                          <input 
-                            type="text" 
-                            value={formData.field_mapping.location}
-                            onChange={(e) => setFormData({...formData, field_mapping: {...formData.field_mapping, location: e.target.value}})}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                            placeholder="location"
-                          />
+                          <label className="block text-xs font-bold text-slate-700 mb-1">Vaste Locatie</label>
+                          <select 
+                            value={formData.field_mapping._static_location || ""}
+                            onChange={(e) => setFormData({...formData, field_mapping: {...formData.field_mapping, _static_location: e.target.value}})}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                          >
+                            <option value="">Geen vaste locatie...</option>
+                            <option value="Fysio Barendrecht">Fysio Barendrecht</option>
+                            <option value="Fysio Rhoon">Fysio Rhoon</option>
+                            <option value="Fysio Hoefslag">Fysio Hoefslag</option>
+                          </select>
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs font-bold text-slate-700 mb-1">Primaire Klacht</label>
