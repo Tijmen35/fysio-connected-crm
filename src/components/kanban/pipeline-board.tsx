@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { updatePipelineStage } from "@/app/actions/pipeline";
+import { PatientProfile } from "@/components/kanban/patient-profile";
 
 const COLUMNS = [
   { id: "Nieuwe lead", title: "Nieuwe Lead", color: "bg-slate-400" },
@@ -15,6 +16,9 @@ const COLUMNS = [
 export default function PipelineBoard({ initialPatients, pipelineId }: { initialPatients: any[], pipelineId: string }) {
   const [patients, setPatients] = useState(initialPatients);
   const [isPending, startTransition] = useTransition();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{ patientId: string, newStage: string } | null>(null);
+  const [lostReason, setLostReason] = useState("");
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -25,18 +29,43 @@ export default function PipelineBoard({ initialPatients, pipelineId }: { initial
     const newStage = destination.droppableId;
     const patientId = draggableId;
 
-    // Optimistic update
+    // Optimistic update for others
+    if (newStage === "Verloren") {
+      setPendingDrop({ patientId, newStage });
+      return;
+    }
+
     const updatedPatients = patients.map(p => 
       p.id === patientId ? { ...p, pipeline_stage: newStage } : p
     );
     setPatients(updatedPatients);
 
-    // If moved to Verloren, we might want to ask for a reason?
-    // For now, let's just update the stage via server action
     startTransition(async () => {
-      // Create a server action to update the pipeline stage
       await updatePipelineStage(patientId, newStage);
     });
+  };
+
+  const handleLostReasonSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingDrop) return;
+    
+    const { patientId, newStage } = pendingDrop;
+
+    const updatedPatients = patients.map(p => 
+      p.id === patientId ? { ...p, pipeline_stage: newStage, lost_reason: lostReason } : p
+    );
+    setPatients(updatedPatients);
+
+    startTransition(async () => {
+      await updatePipelineStage(patientId, newStage, lostReason);
+      setPendingDrop(null);
+      setLostReason("");
+    });
+  };
+
+  const cancelPendingDrop = () => {
+    setPendingDrop(null);
+    setLostReason("");
   };
 
   return (
@@ -77,6 +106,7 @@ export default function PipelineBoard({ initialPatients, pipelineId }: { initial
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              onClick={() => setSelectedPatientId(patient.id)}
                               className={`bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing ${snapshot.isDragging ? "shadow-lg scale-105" : "hover:border-primary-300"}`}
                             >
                               <div className="font-bold text-sm text-slate-800 mb-1">{patient.full_name}</div>
@@ -104,6 +134,50 @@ export default function PipelineBoard({ initialPatients, pipelineId }: { initial
           );
         })}
       </div>
+
+      {pendingDrop && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[65]" onClick={cancelPendingDrop}></div>
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-[70] w-full max-w-sm">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-lg">Reden van verlies</h3>
+              <button onClick={cancelPendingDrop} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <form onSubmit={handleLostReasonSubmit} className="p-6">
+              <div className="mb-4">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Waarom is deze patiënt verloren?</label>
+                <select 
+                  value={lostReason}
+                  onChange={(e) => setLostReason(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold shadow-sm"
+                >
+                  <option value="">Selecteer een reden...</option>
+                  <option value="Al elders onder behandeling">Al elders onder behandeling</option>
+                  <option value="Geen interesse">Geen interesse</option>
+                  <option value="Geen tijd">Geen tijd</option>
+                  <option value="Geen contact te krijgen">Geen contact te krijgen</option>
+                </select>
+              </div>
+              <button 
+                type="submit"
+                disabled={isPending || !lostReason}
+                className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+              >
+                {isPending ? "Opslaan..." : "Bevestigen"}
+              </button>
+            </form>
+          </div>
+        </>
+      )}
+
+      <PatientProfile 
+        isOpen={!!selectedPatientId} 
+        patientId={selectedPatientId}
+        onClose={() => setSelectedPatientId(null)} 
+      />
     </DragDropContext>
   );
 }

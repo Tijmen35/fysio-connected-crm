@@ -4,15 +4,20 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
-export async function updatePipelineStage(patientId: string, newStage: string) {
+export async function updatePipelineStage(patientId: string, newStage: string, lostReason?: string) {
   const adminAuthClient = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const updateData: any = { pipeline_stage: newStage };
+  if (lostReason) {
+    updateData.lost_reason = lostReason;
+  }
+
   const { error } = await adminAuthClient
     .from("patients")
-    .update({ pipeline_stage: newStage })
+    .update(updateData)
     .eq("id", patientId);
 
   if (error) {
