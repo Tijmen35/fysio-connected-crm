@@ -35,7 +35,7 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
 
   return (
     <div
-      className={`bg-white p-3 rounded-xl shadow-card border border-slate-100 hover:border-primary-300 transition-all cursor-grab active:cursor-grabbing group relative ${isBuffered ? 'opacity-75' : ''}`}
+      className={`bg-white p-3 rounded-xl shadow-card border border-slate-100 hover:border-primary-300 transition-all group relative ${isBuffered ? 'opacity-75' : ''}`}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
@@ -89,28 +89,29 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
 
       <div className="flex flex-wrap gap-1 border-t border-slate-100 pt-2 mt-2">
         {stepTemplate?.task_type === 'send_card' || stepTemplate?.task_type === 'manual_check' ? (
-          <button 
-            disabled={isPending || isBuffered}
-            title={bufferTooltip}
-            className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-blue-50 hover:bg-blue-100 text-[10px] font-bold text-blue-700 transition-colors text-center flex items-center justify-center gap-1 border border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={async (e) => { 
-              e.stopPropagation(); 
-              startTransition(async () => {
-                const { advanceWorkflow } = await import("@/app/actions/task");
-                await advanceWorkflow(task.id, "afgerond");
-              });
-            }}
-          >
-            <i className={`fa-solid ${stepTemplate.task_type === 'send_card' ? 'fa-envelope-open-text' : 'fa-check-double'} text-[10px]`}></i>
-            <span className="hidden sm:inline">Afgerond</span>
-          </button>
-        ) : (
-          <>
+          <div title={bufferTooltip} className={isBuffered ? 'flex-1 cursor-not-allowed' : 'flex-1'}>
             <button 
               disabled={isPending || isBuffered}
-              title={bufferTooltip}
-              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-orange-50 hover:bg-orange-100 text-[10px] font-bold text-orange-700 transition-colors text-center flex items-center justify-center gap-1 border border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-1.5 px-1 rounded bg-blue-50 hover:bg-blue-100 text-[10px] font-bold text-blue-700 transition-colors text-center flex items-center justify-center gap-1 border border-blue-200 disabled:opacity-50 disabled:pointer-events-none"
               onClick={async (e) => { 
+                e.stopPropagation(); 
+                startTransition(async () => {
+                  const { advanceWorkflow } = await import("@/app/actions/task");
+                  await advanceWorkflow(task.id, "afgerond");
+                });
+              }}
+            >
+              <i className={`fa-solid ${stepTemplate.task_type === 'send_card' ? 'fa-envelope-open-text' : 'fa-check-double'} text-[10px]`}></i>
+              <span className="hidden sm:inline">Afgerond</span>
+            </button>
+          </div>
+        ) : (
+          <>
+            <div title={bufferTooltip} className={isBuffered ? 'flex-1 cursor-not-allowed' : 'flex-1'}>
+              <button 
+                disabled={isPending || isBuffered}
+                className="w-full py-1.5 px-1 rounded bg-orange-50 hover:bg-orange-100 text-[10px] font-bold text-orange-700 transition-colors text-center flex items-center justify-center gap-1 border border-orange-200 disabled:opacity-50 disabled:pointer-events-none"
+                onClick={async (e) => { 
                 e.stopPropagation(); 
                 
                 // Check if there is a template
@@ -132,19 +133,21 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
             >
               <i className="fa-solid fa-phone-slash text-[10px]"></i>
               <span className="hidden sm:inline">Niet opgenomen</span>
-            </button>
-            <button 
-              disabled={isBuffered}
-              title={bufferTooltip}
-              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-emerald-50 hover:bg-emerald-100 text-[10px] font-bold text-emerald-700 transition-colors text-center flex items-center justify-center gap-1 border border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                openCallOutcomeModal(task.id, patientName);
-              }}
-            >
-              <i className="fa-solid fa-phone-volume text-[10px]"></i>
-              <span className="hidden sm:inline">Opgenomen</span>
-            </button>
+              </button>
+            </div>
+            <div title={bufferTooltip} className={isBuffered ? 'flex-1 cursor-not-allowed' : 'flex-1'}>
+              <button 
+                disabled={isBuffered}
+                className="w-full py-1.5 px-1 rounded bg-emerald-50 hover:bg-emerald-100 text-[10px] font-bold text-emerald-700 transition-colors text-center flex items-center justify-center gap-1 border border-emerald-200 disabled:opacity-50 disabled:pointer-events-none"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  openCallOutcomeModal(task.id, patientName);
+                }}
+              >
+                <i className="fa-solid fa-phone-volume text-[10px]"></i>
+                <span className="hidden sm:inline">Opgenomen</span>
+              </button>
+            </div>
           </>
         )}
       </div>
