@@ -390,8 +390,7 @@ export function IntegratiesClient({ webhookConfigs = [], pipelines = [] }: { web
         </div>
       )}
       
-      {/* Other Modals can go here if needed... */}
-      {selectedIntegration && selectedIntegration.id !== "webflow" && (
+      {selectedIntegration && selectedIntegration.id !== "webflow" && selectedIntegration.id !== "facebook" && (
          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
            {/* Fallback for other integrations if they ever get active */}
            <div className="bg-white rounded-2xl shadow-2xl p-6">
