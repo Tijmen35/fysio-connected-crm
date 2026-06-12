@@ -3,9 +3,9 @@ import { getWebhookConfigs } from "@/app/actions/integrations";
 import { getPipelines } from "@/app/actions/pipeline";
 
 export default async function IntegratiesPage() {
-  const webflowConfigs = await getWebhookConfigs("webflow");
+  const allConfigs = await getWebhookConfigs(); // Remove "webflow" filter if possible, or we will just modify getWebhookConfigs
   const pipelinesRes = await getPipelines();
   const pipelines = pipelinesRes.success ? pipelinesRes.data : [];
 
-  return <IntegratiesClient webflowConfigs={webflowConfigs} pipelines={pipelines} />;
+  return <IntegratiesClient webhookConfigs={allConfigs} pipelines={pipelines} />;
 }

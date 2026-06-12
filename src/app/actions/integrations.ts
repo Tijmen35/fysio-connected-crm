@@ -3,13 +3,18 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getWebhookConfigs(provider: string) {
+export async function getWebhookConfigs(provider?: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("webhook_configs")
     .select("*, pipeline:pipelines(name)")
-    .eq("provider", provider)
     .order("created_at", { ascending: false });
+
+  if (provider) {
+    query = query.eq("provider", provider);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching webhooks:", error);

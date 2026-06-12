@@ -20,7 +20,7 @@ const INTEGRATIONS = [
     icon: "fa-brands fa-meta",
     color: "text-indigo-600",
     bg: "bg-indigo-50",
-    status: "coming_soon"
+    status: "active"
   },
   {
     id: "mailchimp",
@@ -33,7 +33,7 @@ const INTEGRATIONS = [
   }
 ];
 
-export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { webflowConfigs?: any[], pipelines?: any[] }) {
+export function IntegratiesClient({ webhookConfigs = [], pipelines = [] }: { webhookConfigs?: any[], pipelines?: any[] }) {
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
@@ -84,7 +84,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
         });
       } else {
         res = await createWebhookConfig({
-          provider: "webflow",
+          provider: selectedIntegration.id,
           name: formData.name,
           pipeline_id: formData.pipeline_id,
           field_mapping: formData.field_mapping as any
@@ -170,8 +170,8 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
         ))}
       </div>
 
-      {/* Webhook Modal */}
-      {selectedIntegration && selectedIntegration.id === "webflow" && (
+      {/* Webhook Modal for Webflow & Facebook */}
+      {selectedIntegration && (selectedIntegration.id === "webflow" || selectedIntegration.id === "facebook") && (
         <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -211,14 +211,15 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                     </button>
                   </div>
 
-                  {webflowConfigs.length === 0 ? (
+                  {webhookConfigs.filter(c => c.provider === selectedIntegration.id).length === 0 ? (
                     <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-sm text-slate-500">Er zijn nog geen Webflow koppelingen.</p>
+                      <p className="text-sm text-slate-500">Er zijn nog geen {selectedIntegration.name} koppelingen.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {webflowConfigs.map(config => {
-                        const url = typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/webflow/${config.id}` : '';
+                      {webhookConfigs.filter(c => c.provider === selectedIntegration.id).map(config => {
+                        const url = typeof window !== 'undefined' ? 
+                          (selectedIntegration.id === 'facebook' ? `${window.location.origin}/api/webhooks/facebook` : `${window.location.origin}/api/webhooks/${selectedIntegration.id}/${config.id}`) : '';
                         return (
                           <div key={config.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
@@ -271,13 +272,15 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                   
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Naam van formulier/website</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {selectedIntegration?.id === "facebook" ? "Facebook Form ID (verplicht)" : "Naam van formulier/website"}
+                      </label>
                       <input 
                         type="text" 
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                        placeholder="bijv. Knieklachten Formulier"
+                        placeholder={selectedIntegration?.id === "facebook" ? "bijv. 1234567890" : "bijv. Knieklachten Formulier"}
                       />
                     </div>
                     
@@ -295,8 +298,14 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
-                      <h5 className="font-bold text-slate-800 text-sm mb-3">Field Mapping (Webflow Veldnamen)</h5>
-                      <p className="text-xs text-slate-500 mb-4">Vul hier de exacte veldnamen in zoals ze vanuit Webflow worden verstuurd (bijv. 'Name-3').</p>
+                      <h5 className="font-bold text-slate-800 text-sm mb-3">
+                        {selectedIntegration?.id === "facebook" ? "Field Mapping (Meta Veldnamen)" : "Field Mapping (Webflow Veldnamen)"}
+                      </h5>
+                      <p className="text-xs text-slate-500 mb-4">
+                        {selectedIntegration?.id === "facebook" 
+                          ? "Vul de exacte veldnamen in zoals ze in je Facebook Lead Formulier staan (bijv. 'full_name' of 'phone_number')." 
+                          : "Vul hier de exacte veldnamen in zoals ze vanuit Webflow worden verstuurd (bijv. 'Name-3')."}
+                      </p>
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div>
