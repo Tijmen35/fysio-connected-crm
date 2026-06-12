@@ -30,15 +30,29 @@ export async function POST(
 
     // 2. Map fields based on configuration
     const mapping = config.field_mapping || {};
+    
+    // Lowercase all keys in body and body.data for case-insensitive matching
+    const lowerBody: Record<string, any> = {};
+    if (body) {
+      for (const [k, v] of Object.entries(body)) {
+        lowerBody[k.toLowerCase()] = v;
+      }
+      if (body.data && typeof body.data === 'object') {
+        for (const [k, v] of Object.entries(body.data)) {
+          lowerBody[k.toLowerCase()] = v;
+        }
+      }
+    }
+
     const extractField = (crmField: string) => {
       const webflowFieldName = mapping[crmField];
       if (!webflowFieldName) return null;
-      return body[webflowFieldName] || body.data?.[webflowFieldName] || null;
+      return lowerBody[webflowFieldName.toLowerCase()] || null;
     };
 
     const patientData = {
       full_name: extractField("full_name") || "Onbekende Lead",
-      phone: extractField("phone"),
+      phone: extractField("phone") || "0000000000", // Fallback required for NOT NULL constraint
       email: extractField("email"),
       location: mapping._static_location || extractField("location"),
       primary_complaint: extractField("primary_complaint"),

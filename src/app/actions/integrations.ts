@@ -57,3 +57,27 @@ export async function deleteWebhookConfig(id: string) {
   revalidatePath("/integraties");
   return { success: true };
 }
+
+export async function updateWebhookConfig(id: string, data: {
+  name: string;
+  pipeline_id: string;
+  field_mapping: Record<string, string>;
+}) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from("webhook_configs")
+    .update({
+      name: data.name,
+      pipeline_id: data.pipeline_id,
+      field_mapping: data.field_mapping
+    })
+    .eq("id", id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/integraties");
+  return { success: true };
+}

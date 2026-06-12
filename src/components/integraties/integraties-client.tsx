@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createWebhookConfig, deleteWebhookConfig } from "@/app/actions/integrations";
+import { createWebhookConfig, deleteWebhookConfig, updateWebhookConfig } from "@/app/actions/integrations";
 
 const INTEGRATIONS = [
   {
@@ -48,6 +48,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
   
   // Create Webhook state
   const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState<{
     name: string;
@@ -83,23 +84,51 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
 
   function handleCreate() {
     startTransition(async () => {
-      const res = await createWebhookConfig({
-        provider: "webflow",
-        name: formData.name,
-        pipeline_id: formData.pipeline_id,
-        field_mapping: formData.field_mapping
-      });
+      let res;
+      if (editingId) {
+        res = await updateWebhookConfig(editingId, {
+          name: formData.name,
+          pipeline_id: formData.pipeline_id,
+          field_mapping: formData.field_mapping as any
+        });
+      } else {
+        res = await createWebhookConfig({
+          provider: "webflow",
+          name: formData.name,
+          pipeline_id: formData.pipeline_id,
+          field_mapping: formData.field_mapping as any
+        });
+      }
+
       if (res.success) {
         setIsCreating(false);
+        setEditingId(null);
         setFormData({
           name: "",
           pipeline_id: pipelines.length > 0 ? pipelines[0].id : "",
-          field_mapping: { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "" }
+          field_mapping: { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
         });
       } else {
-        alert("Fout bij aanmaken: " + res.error);
+        alert("Fout bij opslaan: " + res.error);
       }
     });
+  }
+
+  function handleEdit(config: any) {
+    setFormData({
+      name: config.name,
+      pipeline_id: config.pipeline_id || (pipelines.length > 0 ? pipelines[0].id : ""),
+      field_mapping: {
+        full_name: config.field_mapping?.full_name || "",
+        phone: config.field_mapping?.phone || "",
+        email: config.field_mapping?.email || "",
+        location: config.field_mapping?.location || "",
+        primary_complaint: config.field_mapping?.primary_complaint || "",
+        _static_location: config.field_mapping?._static_location || ""
+      }
+    });
+    setEditingId(config.id);
+    setIsCreating(true);
   }
 
   function handleDelete(id: string) {
@@ -161,7 +190,11 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg">{selectedIntegration.name} Instellingen</h3>
               </div>
-              <button onClick={() => setSelectedIntegration(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => {
+                setSelectedIntegration(null);
+                setIsCreating(false);
+                setEditingId(null);
+              }} className="text-slate-400 hover:text-slate-600">
                 <i className="fa-solid fa-xmark text-xl"></i>
               </button>
             </div>
@@ -172,7 +205,15 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                   <div className="flex justify-between items-center">
                     <h4 className="font-bold text-slate-800">Actieve Koppelingen</h4>
                     <button 
-                      onClick={() => setIsCreating(true)}
+                      onClick={() => {
+                        setFormData({
+                          name: "",
+                          pipeline_id: pipelines.length > 0 ? pipelines[0].id : "",
+                          field_mapping: { full_name: "name", phone: "phone", email: "email", location: "", primary_complaint: "", _static_location: "" }
+                        });
+                        setEditingId(null);
+                        setIsCreating(true);
+                      }}
                       className="px-4 py-2 bg-primary hover:bg-primary-light text-slate-900 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
                     >
                       <i className="fa-solid fa-plus"></i> Nieuwe Koppeling
@@ -194,14 +235,24 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                                 <h5 className="font-bold text-slate-800">{config.name}</h5>
                                 <p className="text-xs text-slate-500 mt-0.5">Pijplijn: {config.pipeline?.name}</p>
                               </div>
-                              <button 
-                                onClick={() => handleDelete(config.id)}
-                                disabled={isPending}
-                                className="text-red-500 hover:text-red-700 p-1"
-                                title="Verwijderen"
-                              >
-                                <i className="fa-regular fa-trash-can"></i>
-                              </button>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => handleEdit(config)}
+                                  disabled={isPending}
+                                  className="text-slate-400 hover:text-slate-600 p-1"
+                                  title="Bewerken"
+                                >
+                                  <i className="fa-solid fa-pen"></i>
+                                </button>
+                                <button 
+                                  onClick={() => handleDelete(config.id)}
+                                  disabled={isPending}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                  title="Verwijderen"
+                                >
+                                  <i className="fa-regular fa-trash-can"></i>
+                                </button>
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-2 mt-2">
@@ -223,7 +274,9 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                 </>
               ) : (
                 <div className="space-y-4">
-                  <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Nieuwe Koppeling Aanmaken</h4>
+                  <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2">
+                    {editingId ? "Koppeling Bewerken" : "Nieuwe Koppeling Aanmaken"}
+                  </h4>
                   
                   <div className="space-y-3">
                     <div>
@@ -314,7 +367,10 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
 
                   <div className="flex gap-2 justify-end pt-4">
                     <button 
-                      onClick={() => setIsCreating(false)}
+                      onClick={() => {
+                        setIsCreating(false);
+                        setEditingId(null);
+                      }}
                       className="px-4 py-2 text-slate-500 font-bold text-sm"
                     >
                       Annuleren
@@ -324,7 +380,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                       disabled={isPending || !formData.name}
                       className="px-6 py-2 bg-primary hover:bg-primary-light text-slate-900 font-bold text-sm rounded-xl transition-colors disabled:opacity-50"
                     >
-                      {isPending ? 'Opslaan...' : 'Opslaan & Genereer URL'}
+                      {isPending ? 'Opslaan...' : (editingId ? 'Wijzigingen Opslaan' : 'Opslaan & Genereer URL')}
                     </button>
                   </div>
                 </div>
