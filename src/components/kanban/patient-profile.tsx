@@ -313,8 +313,10 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                                       </p>
                                       <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
                                         {isCompleted ? "Voltooid op" : "Gepland voor"} {new Date(displayDate).toLocaleDateString("nl-NL")}
-                                        {!isCompleted && task.status === "later" && task.description && (
-                                          <span className="ml-1 text-primary">({task.description.split(' ').slice(-1)[0]})</span>
+                                        {!isCompleted && task.status === "later" && task.scheduled_for && (
+                                          <span className="ml-1 text-primary">
+                                            om {new Date(task.scheduled_for).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
+                                          </span>
                                         )}
                                       </p>
                                       {task.outcome_note && (

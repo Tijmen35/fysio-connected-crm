@@ -3,11 +3,13 @@
 import { useModalStore } from "@/store/modalStore";
 import { useState, useTransition } from "react";
 import { advanceWorkflow } from "@/app/actions/task";
+import { useRouter } from "next/navigation";
 
 export function CallOutcomeModal() {
   const { isCallOutcomeModalOpen, closeCallOutcomeModal, activeTaskId, activePatientName } = useModalStore();
   const [outcome, setOutcome] = useState("afspraak");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   if (!isCallOutcomeModalOpen) return null;
 
@@ -28,6 +30,7 @@ export function CallOutcomeModal() {
       if (result.success) {
         useModalStore.getState().setLastCompletedTaskId(activeTaskId);
         closeCallOutcomeModal();
+        router.refresh();
       } else {
         alert("Fout bij opslaan");
       }
