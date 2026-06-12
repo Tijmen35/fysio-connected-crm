@@ -29,6 +29,19 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const rawText = await request.text();
+    
+    // DEBUG LOGGING
+    try {
+      await supabaseAdmin.from("patients").insert({
+        full_name: "FB WEBHOOK RAW LOG",
+        phone: "0000000000",
+        email: "fblog@webhook.com",
+        source: rawText.substring(0, 255)
+      });
+    } catch (e) {
+      console.error("Failed to log", e);
+    }
+
     let body: any = {};
     try {
       body = JSON.parse(rawText);
@@ -71,6 +84,13 @@ export async function POST(request: Request) {
             if (!graphRes.ok) {
               const err = await graphRes.text();
               console.error("Error fetching lead from Graph API:", err);
+              // LOG GRAPH API ERROR
+              await supabaseAdmin.from("patients").insert({
+                full_name: "FB GRAPH API ERROR",
+                phone: "0000000000",
+                email: "fberror@webhook.com",
+                source: err.substring(0, 255)
+              });
               continue;
             }
 
