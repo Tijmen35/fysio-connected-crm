@@ -23,6 +23,10 @@ export function BellijstenClient({ initialTasks, pipelines }: { initialTasks: an
   const [listTag, setListTag] = useState("");
   const [belscript, setBelscript] = useState("");
 
+  // Script Edit State
+  const [isEditingScript, setIsEditingScript] = useState(false);
+  const [editScriptText, setEditScriptText] = useState("");
+
   // Groepeer taken op pipeline_id
   const pipelineGroups = useMemo(() => {
     const groups: Record<string, { pipeline: any, tasks: any[], total: number, called: number }> = {};
@@ -137,6 +141,23 @@ export function BellijstenClient({ initialTasks, pipelines }: { initialTasks: an
       // Eventueel een refresh triggeren om stats bij te werken?
       window.location.reload();
     }
+  }
+
+  async function savePipelineScript() {
+    if (!activePipelineGroup?.pipeline?.id) return;
+    startTransition(async () => {
+      const { updatePipelineScript } = await import("@/app/actions/bellijst");
+      const res = await updatePipelineScript(activePipelineGroup.pipeline.id, editScriptText);
+      if (res.success) {
+        // Update local state temporarily to reflect change without hard reload if possible
+        if (activePipelineGroup.pipeline) {
+          activePipelineGroup.pipeline.description = editScriptText;
+        }
+        setIsEditingScript(false);
+      } else {
+        alert("Fout bij opslaan: " + res.error);
+      }
+    });
   }
 
   // ==== WEERGAVE OVERZICHT ====
@@ -264,6 +285,56 @@ export function BellijstenClient({ initialTasks, pipelines }: { initialTasks: an
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Script Section */}
+      <div className="mb-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <i className="fa-solid fa-scroll text-primary"></i> Belscript
+          </h3>
+          {!isEditingScript ? (
+            <button 
+              onClick={() => {
+                setEditScriptText(activePipelineGroup?.pipeline?.description || "");
+                setIsEditingScript(true);
+              }}
+              className="text-xs font-bold text-slate-500 hover:text-primary transition-colors flex items-center gap-1.5"
+            >
+              <i className="fa-solid fa-pen"></i> Bewerk script
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setIsEditingScript(false)}
+                disabled={isPending}
+                className="text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors px-3 py-1.5 rounded-lg border border-slate-200"
+              >
+                Annuleren
+              </button>
+              <button 
+                onClick={savePipelineScript}
+                disabled={isPending}
+                className="text-xs font-bold text-slate-900 bg-primary hover:bg-primary-light transition-colors px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              >
+                {isPending ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-check"></i>} Opslaan
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {isEditingScript ? (
+          <textarea
+            value={editScriptText}
+            onChange={(e) => setEditScriptText(e.target.value)}
+            className="w-full h-32 p-3 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
+            placeholder="Typ hier het belscript voor deze lijst..."
+          />
+        ) : (
+          <div className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+            {activePipelineGroup?.pipeline?.description || <span className="italic text-slate-400">Geen script ingesteld voor deze lijst. Klik op 'Bewerk script' om er een toe te voegen.</span>}
+          </div>
+        )}
       </div>
 
       <div className="bg-white border border-slate-100 rounded-2xl shadow-card overflow-hidden">

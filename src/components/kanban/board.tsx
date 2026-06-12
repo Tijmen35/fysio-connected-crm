@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { PatientProfile } from "./patient-profile";
+import { ScriptModal } from "@/components/modals/script-modal";
 
 import { useModalStore } from "@/store/modalStore";
 
-function TaskCard({ task, templates = [], onClick }: { task: any, templates?: any[], onClick: () => void }) {
+function TaskCard({ task, templates = [], onClick, onViewScript }: { task: any, templates?: any[], onClick: () => void, onViewScript?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const patientName = task.patient?.full_name || task.patient?.name || task.patientName;
   let pipelineName = task.pipeline_name || "";
@@ -92,6 +93,18 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
         </div>
       </div>
 
+      {onViewScript && (
+        <div className="mt-2 mb-1">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onViewScript(); }}
+            className="w-full py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[10px] font-bold rounded flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
+          >
+            <i className="fa-solid fa-scroll text-primary"></i>
+            Lees belscript
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-1 border-t border-slate-100 pt-2 mt-2">
         {stepTemplate?.task_type === 'send_card' || stepTemplate?.task_type === 'manual_check' ? (
           <div title={bufferTooltip} className={isBuffered ? 'flex-1 cursor-not-allowed' : 'flex-1'}>
@@ -162,6 +175,7 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
 
 export function KanbanBoard({ initialTasks = [], templates = [], userName = "Collega" }: { initialTasks?: any[], templates?: any[], userName?: string }) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [viewScript, setViewScript] = useState<string | null>(null);
 
   const now = new Date();
   const startOfToday = new Date(now);
@@ -201,6 +215,15 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
   });
   
   const belvoorraad = initialTasks.filter(t => t.status === "belvoorraad");
+  
+  // Group belvoorraad per tag/pipeline and show only the first task per tag
+  const belvoorraadPerPipeline = new Map();
+  belvoorraad.forEach(task => {
+    if (!belvoorraadPerPipeline.has(task.pipeline_id)) {
+      belvoorraadPerPipeline.set(task.pipeline_id, task);
+    }
+  });
+  const activeBelvoorraadTasks = Array.from(belvoorraadPerPipeline.values());
 
   const TASKS = {
     vandaagOchtend,
@@ -362,7 +385,19 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                   </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto">
-                  {TASKS.belvoorraad.map(task => <TaskCard key={task.id} task={task} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
+                  {activeBelvoorraadTasks.map(task => (
+                    <TaskCard 
+                      key={task.id} 
+                      task={task} 
+                      onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} 
+                      onViewScript={() => {
+                        const script = typeof task.pipeline === 'object' && !Array.isArray(task.pipeline) 
+                          ? task.pipeline.description 
+                          : (Array.isArray(task.pipeline) ? task.pipeline[0]?.description : "");
+                        setViewScript(script || "Geen script ingesteld voor deze lijst.");
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -377,6 +412,13 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
         patientId={selectedPatientId}
         onClose={() => setSelectedPatientId(null)} 
       />
+
+      {viewScript && (
+        <ScriptModal 
+          script={viewScript} 
+          onClose={() => setViewScript(null)} 
+        />
+      )}
     </>
   );
 }

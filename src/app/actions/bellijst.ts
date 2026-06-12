@@ -99,3 +99,22 @@ export async function importBellijst(csvText: string, listTag: string, belscript
   
   return { success: true, count: patientIds.length };
 }
+
+export async function updatePipelineScript(pipelineId: string, description: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("pipelines")
+    .update({ description })
+    .eq("id", pipelineId);
+
+  if (error) {
+    console.error("Fout bij updaten belscript:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/bellijsten");
+  revalidatePath("/");
+  
+  return { success: true };
+}
