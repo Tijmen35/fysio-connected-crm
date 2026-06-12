@@ -257,7 +257,7 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
 
                       {/* Active Pipeline Timeline */}
                       <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                        <div className="relative pl-4 space-y-6 border-l-2 border-slate-200 ml-2">
+                        <div className="relative space-y-6 border-l-2 border-slate-200 ml-2 pb-2">
                           {(() => {
                             const pipelineTasks = currentTab === "Overig" || currentTab === "Geen traject"
                               ? tasks.filter((t: any) => {
@@ -284,7 +284,7 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                             return (
                               <>
                                 {upcomingSteps.map((step, idx) => (
-                                  <div key={`future-${idx}`} className="relative pl-2">
+                                  <div key={`future-${idx}`} className="relative pl-6">
                                     <div className="absolute -left-[15px] bg-slate-50 w-7 h-7 flex items-center justify-center rounded-full">
                                       <div className="w-3 h-3 bg-slate-200 rounded-full border-2 border-white shadow-sm"></div>
                                     </div>
@@ -300,7 +300,7 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                                     : task.scheduled_for || task.created_at;
 
                                   return (
-                                    <div key={task.id} className={`relative pl-2 ${isCompleted ? "opacity-60" : ""}`}>
+                                    <div key={task.id} className={`relative pl-6 ${isCompleted ? "opacity-60" : ""}`}>
                                       <div className="absolute -left-[15px] bg-white w-7 h-7 flex items-center justify-center rounded-full">
                                         {isCompleted ? (
                                           <i className="fa-solid fa-check text-emerald-500 bg-emerald-50 w-6 h-6 flex items-center justify-center rounded-full text-[10px]"></i>
