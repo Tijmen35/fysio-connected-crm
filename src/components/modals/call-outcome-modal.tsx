@@ -15,6 +15,8 @@ export function CallOutcomeModal() {
     if (!activeTaskId) return;
     const rawDate = formData.get("scheduleDate") as string | undefined;
     const rawTime = formData.get("scheduleTime") as string | undefined;
+    const notes = formData.get("notes") as string | undefined;
+    const lostReason = formData.get("lostReason") as string | undefined;
     
     let combinedDateTime: string | undefined = undefined;
     if (rawDate && rawTime) {
@@ -22,7 +24,7 @@ export function CallOutcomeModal() {
     }
 
     startTransition(async () => {
-      const result = await advanceWorkflow(activeTaskId, outcome, combinedDateTime);
+      const result = await advanceWorkflow(activeTaskId, outcome, combinedDateTime, notes, lostReason);
       if (result.success) {
         useModalStore.getState().setLastCompletedTaskId(activeTaskId);
         closeCallOutcomeModal();
@@ -62,16 +64,35 @@ export function CallOutcomeModal() {
               />
               <span className="text-sm font-bold text-slate-700">Afspraak ingepland</span>
             </label>
-            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-              <input 
-                type="radio" 
-                name="call-outcome" 
-                value="afwijzing"
-                checked={outcome === "afwijzing"}
-                onChange={() => setOutcome("afwijzing")}
-                className="text-primary focus:ring-primary h-4 w-4" 
-              />
-              <span className="text-sm font-bold text-slate-700">Afwijzing / Geen interesse</span>
+            <label className="flex flex-col gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <input 
+                  type="radio" 
+                  name="call-outcome" 
+                  value="afwijzing"
+                  checked={outcome === "afwijzing"}
+                  onChange={() => setOutcome("afwijzing")}
+                  className="text-primary focus:ring-primary h-4 w-4" 
+                />
+                <span className="text-sm font-bold text-slate-700">Afwijzing / Geen interesse</span>
+              </div>
+              
+              {outcome === "afwijzing" && (
+                <div className="pl-7 pr-1 pb-1 animate-in slide-in-from-top-2 fade-in duration-200">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Reden</label>
+                  <select 
+                    name="lostReason"
+                    required={outcome === "afwijzing"}
+                    className="w-full bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold shadow-sm"
+                  >
+                    <option value="">Selecteer een reden...</option>
+                    <option value="Al elders onder behandeling">Al elders onder behandeling</option>
+                    <option value="Geen interesse">Geen interesse</option>
+                    <option value="Geen tijd">Geen tijd</option>
+                    <option value="Geen contact te krijgen">Geen contact te krijgen</option>
+                  </select>
+                </div>
+              )}
             </label>
             <label className="flex flex-col gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
@@ -118,6 +139,17 @@ export function CallOutcomeModal() {
               )}
             </label>
           </div>
+          
+          <div className="mt-4">
+            <label className="text-xs font-bold text-slate-700 mb-1 block">Gespreksnotitie</label>
+            <textarea
+              name="notes"
+              rows={3}
+              placeholder="Schrijf hier eventuele opmerkingen of details over het gesprek..."
+              className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:bg-white focus:ring-primary focus:border-primary px-3 py-2 placeholder-slate-400 resize-none shadow-inner"
+            ></textarea>
+          </div>
+
           <button 
             type="submit"
             disabled={isPending}

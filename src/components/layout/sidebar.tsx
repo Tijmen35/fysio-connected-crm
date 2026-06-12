@@ -75,8 +75,8 @@ export function Sidebar({ userProfile }: { userProfile?: any }) {
               pathname === "/instellingen" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
             }`}
           >
-            <i className="fa-solid fa-sliders text-lg w-5"></i>
-            <span>Proces & Automatisering</span>
+            <i className="fa-solid fa-code-branch w-5"></i>
+            <span>Workflows</span>
           </Link>
 
 

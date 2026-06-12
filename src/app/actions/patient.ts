@@ -79,6 +79,13 @@ export async function createPatient(formData: FormData) {
     console.error("Error creating task:", taskError);
   }
 
+  if (pipeline?.id) {
+    await adminAuthClient.from("patients").update({
+      active_pipeline_id: pipeline.id,
+      pipeline_stage: "Nieuwe lead"
+    }).eq("id", patientId);
+  }
+
   revalidatePath("/");
   return { success: true, patientId };
 }

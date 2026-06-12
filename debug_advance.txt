@@ -1,0 +1,6 @@
+2026-06-12T10:55:56.801Z | --- START advanceWorkflow ---
+2026-06-12T10:55:56.802Z | taskId: 892ab951-c416-4752-948d-32ee4afbbb44 outcome: niet_opgenomen
+2026-06-12T10:59:04.080Z | --- START advanceWorkflow ---
+2026-06-12T10:59:04.080Z | taskId: 892ab951-c416-4752-948d-32ee4afbbb44 outcome: niet_opgenomen
+2026-06-12T10:59:04.172Z | pipelineName: undefined currentStepIndex: 1
+2026-06-12T10:59:04.369Z | EARLY RETURN: No pipeline or WORKFLOWS falsy

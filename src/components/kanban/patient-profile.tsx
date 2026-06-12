@@ -195,6 +195,17 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
                     </select>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Gespreksnotities / Opmerkingen</label>
+                  <textarea 
+                    value={patient?.notes || ""} 
+                    readOnly
+                    rows={3}
+                    placeholder="Notities via Call Outcome Modal..."
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-500 text-sm rounded-lg px-3 py-2 font-semibold resize-none focus:outline-none" 
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Notities worden aangepast via het uitkomst gesprek scherm.</p>
+                </div>
               </form>
 
               {/* Tijdlijn */}
@@ -330,34 +341,6 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex gap-2 mb-3">
-            <button 
-              type="button"
-              disabled={isLoading || !patientId}
-              onClick={() => {
-                // Open No Answer Modal
-                const { openNoAnswerModal } = require("@/store/modalStore").useModalStore.getState();
-                openNoAnswerModal(tasks[0]?.id, patient?.full_name);
-                // Listen for save? A bit tricky since it's decoupled.
-              }}
-              className="flex-1 py-2 text-xs font-bold rounded-xl text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors shadow-sm"
-            >
-              <i className="fa-solid fa-phone-slash mr-1"></i> Geen Gehoor
-            </button>
-            <button 
-              type="button"
-              disabled={isLoading || !patientId}
-              onClick={() => {
-                // Open Call Outcome Modal
-                const { openCallOutcomeModal } = require("@/store/modalStore").useModalStore.getState();
-                openCallOutcomeModal(tasks[0]?.id, patient?.full_name);
-              }}
-              className="flex-1 py-2 text-xs font-bold rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors shadow-sm"
-            >
-              <i className="fa-solid fa-phone mr-1"></i> Opgenomen
-            </button>
-          </div>
-          
           <div className="flex gap-3">
             <button 
               className="flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm"

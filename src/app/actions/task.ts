@@ -7,7 +7,7 @@ import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
-export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) {
+export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string, notes?: string, lostReason?: string) {
 
   const adminAuthClient = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,6 +37,22 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
     .update({ status: "closed" })
     .eq("id", taskId);
 
+  // Update patient pipeline_stage, notes, lost_reason
+  let pipelineStage = "In contact";
+  if (outcome === "afspraak") pipelineStage = "Gewonnen";
+  if (outcome === "afwijzing" || outcome === "geen_interesse") pipelineStage = "Verloren";
+  
+  const isContactOutcome = ["afspraak", "afwijzing", "geen_interesse", "terugbellen", "ander_moment"].includes(outcome);
+
+  const updateData: any = {};
+  if (isContactOutcome) updateData.pipeline_stage = pipelineStage;
+  if (notes) updateData.notes = notes;
+  if (lostReason) updateData.lost_reason = lostReason;
+
+  if (Object.keys(updateData).length > 0) {
+    await supabase.from("patients").update(updateData).eq("id", existingTask.patient_id);
+  }
+
   if (!pipelineName || !WORKFLOWS[pipelineName]) {
     revalidatePath("/");
     return { success: true };
@@ -45,7 +61,9 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
   const flow = WORKFLOWS[pipelineName];
 
   if (outcome === "afspraak") {
+    // Flow stops
   } else if (outcome === "afwijzing" || outcome === "geen_interesse") {
+    // Flow stops
   } else if ((outcome === "terugbellen" || outcome === "ander_moment") && scheduleDate) {
     const dateObj = new Date(scheduleDate);
     const timeString = dateObj.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
