@@ -9,9 +9,9 @@ export interface WorkflowStep {
 export const WORKFLOWS: Record<string, WorkflowStep[]> = {
   "Leadopvolging": [
     { title: "Belpoging 1 (Nieuw)", delayHours: 0, expectedStatus: "Vandaag" },
-    { title: "Belpoging 2", delayHours: 3, expectedStatus: "Vandaag-Middag" }, // +3 hours
+    { title: "Belpoging 2", delayHours: 2, expectedStatus: "Vandaag-Middag" }, // +2 hours
     { title: "Belpoging 3", delayHours: 21, expectedStatus: "Vandaag" }, // Next morning (approx 24h from start)
-    { title: "Belpoging 4", delayHours: 3, expectedStatus: "Vandaag-Middag" },
+    { title: "Belpoging 4", delayHours: 2, expectedStatus: "Vandaag-Middag" },
     { title: "Belpoging 5 (Laatste pogingen)", delayHours: 21, expectedStatus: "Vandaag" }, // Day 3
     { title: "Belpoging 6 (Dag 10)", delayHours: 168, expectedStatus: "Vandaag" }, // +7 days
     { title: "Belpoging 7 (Laatste kans)", delayHours: 96, expectedStatus: "Vandaag", isLastStep: true } // +4 days = Day 14

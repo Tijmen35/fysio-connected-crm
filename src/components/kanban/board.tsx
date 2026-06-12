@@ -28,9 +28,14 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
 
   const displayTitle = stepTemplate?.custom_title || task.title || task.action;
 
+  const now = new Date();
+  const scheduledTime = task.scheduled_for ? new Date(task.scheduled_for) : new Date(0);
+  const isBuffered = scheduledTime > now;
+  const bufferTooltip = isBuffered ? `Tijdelijke buffer actief tot ${scheduledTime.toLocaleTimeString('nl-NL', {hour: '2-digit', minute: '2-digit'})}` : undefined;
+
   return (
     <div
-      className="bg-white p-3 rounded-xl shadow-card border border-slate-100 hover:border-primary-300 transition-all cursor-grab active:cursor-grabbing group relative"
+      className={`bg-white p-3 rounded-xl shadow-card border border-slate-100 hover:border-primary-300 transition-all cursor-grab active:cursor-grabbing group relative ${isBuffered ? 'opacity-75' : ''}`}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
@@ -85,8 +90,9 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
       <div className="flex flex-wrap gap-1 border-t border-slate-100 pt-2 mt-2">
         {stepTemplate?.task_type === 'send_card' || stepTemplate?.task_type === 'manual_check' ? (
           <button 
-            disabled={isPending}
-            className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-blue-50 hover:bg-blue-100 text-[10px] font-bold text-blue-700 transition-colors text-center flex items-center justify-center gap-1 border border-blue-200 disabled:opacity-50"
+            disabled={isPending || isBuffered}
+            title={bufferTooltip}
+            className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-blue-50 hover:bg-blue-100 text-[10px] font-bold text-blue-700 transition-colors text-center flex items-center justify-center gap-1 border border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={async (e) => { 
               e.stopPropagation(); 
               startTransition(async () => {
@@ -101,8 +107,9 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
         ) : (
           <>
             <button 
-              disabled={isPending}
-              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-orange-50 hover:bg-orange-100 text-[10px] font-bold text-orange-700 transition-colors text-center flex items-center justify-center gap-1 border border-orange-200 disabled:opacity-50"
+              disabled={isPending || isBuffered}
+              title={bufferTooltip}
+              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-orange-50 hover:bg-orange-100 text-[10px] font-bold text-orange-700 transition-colors text-center flex items-center justify-center gap-1 border border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={async (e) => { 
                 e.stopPropagation(); 
                 
@@ -127,7 +134,9 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
               <span className="hidden sm:inline">Niet opgenomen</span>
             </button>
             <button 
-              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-emerald-50 hover:bg-emerald-100 text-[10px] font-bold text-emerald-700 transition-colors text-center flex items-center justify-center gap-1 border border-emerald-200"
+              disabled={isBuffered}
+              title={bufferTooltip}
+              className="flex-1 min-w-[50px] py-1.5 px-1 rounded bg-emerald-50 hover:bg-emerald-100 text-[10px] font-bold text-emerald-700 transition-colors text-center flex items-center justify-center gap-1 border border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={(e) => { 
                 e.stopPropagation(); 
                 openCallOutcomeModal(task.id, patientName);
@@ -147,6 +156,9 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
   
@@ -159,19 +171,19 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
   const vandaagOchtend = activeTasks.filter(t => {
     if (!t.scheduled_for) return t.status === "vandaag";
     const dt = new Date(t.scheduled_for);
-    return dt <= now && dt.getHours() < 13;
+    return dt <= endOfToday && dt.getHours() < 13;
   });
 
   const vandaagMiddag = activeTasks.filter(t => {
     if (!t.scheduled_for) return false;
     const dt = new Date(t.scheduled_for);
-    return dt <= now && dt.getHours() >= 13;
+    return dt <= endOfToday && dt.getHours() >= 13;
   });
 
   const morgen = activeTasks.filter(t => {
     if (!t.scheduled_for) return t.status === "morgen" || t.status === "Morgen";
     const dt = new Date(t.scheduled_for);
-    return dt > now && dt <= endOfTomorrow;
+    return dt > endOfToday && dt <= endOfTomorrow;
   });
 
   const overmorgen = activeTasks.filter(t => {

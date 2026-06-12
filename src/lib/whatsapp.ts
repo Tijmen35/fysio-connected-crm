@@ -6,12 +6,12 @@ export interface WhatsAppTemplate {
   components: any[];
 }
 
-// In a real scenario, these would come from process.env
-const WA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "";
-const WA_PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
-const WA_BUSINESS_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || "";
+// We read from process.env inside the functions to ensure they pick up values loaded at runtime.
 
 export async function getWhatsAppTemplates(): Promise<WhatsAppTemplate[]> {
+  const WA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "";
+  const WA_BUSINESS_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || "";
+
   if (!WA_TOKEN || !WA_BUSINESS_ID) {
     // Return mock templates if no keys are provided
     return [
@@ -51,6 +51,9 @@ export function countTemplateVariables(template: WhatsAppTemplate | undefined): 
 }
 
 export async function sendWhatsAppTemplate(to: string, templateName: string, patient: any, mapping: Record<string, string> = {}) {
+  const WA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "";
+  const WA_PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+
   // Fallback if no mapping is provided but variables are expected: we'll just try to send first_name
   const numVars = Math.max(Object.keys(mapping).length, 1);
   const parameters = [];
