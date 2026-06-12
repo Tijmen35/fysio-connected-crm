@@ -73,6 +73,8 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
     }
   });
 
+  const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/webhook/${selectedIntegration?.id}` : '';
+
   function handleCopy(url: string, id: string) {
     navigator.clipboard.writeText(url);
     setCopiedId(id);
@@ -184,7 +186,7 @@ export function IntegratiesClient({ webflowConfigs = [], pipelines = [] }: { web
                   ) : (
                     <div className="space-y-4">
                       {webflowConfigs.map(config => {
-                        const url = `https://fysioconnected.nl/api/webhooks/webflow/${config.id}`;
+                        const url = typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/webflow/${config.id}` : '';
                         return (
                           <div key={config.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
