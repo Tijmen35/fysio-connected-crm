@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { WORKFLOWS, calculateNextScheduledDate } from "@/lib/workflows";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
-export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) {
+export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) { require("fs").appendFileSync("advance_log.txt", "\n--- START advanceWorkflow --- \nTaskID: " + taskId + " \nOutcome: " + outcome + "\n");
   const supabase = await createClient();
 
   // Get the existing task
@@ -17,8 +17,8 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
 
   if (!existingTask) return { success: false, error: "Task not found" };
 
-  const pipelineName = existingTask.pipeline?.name;
-  const currentStepIndex = existingTask.step_index || 0;
+  require("fs").appendFileSync("advance_log.txt", "\npipelineName: " + (existingTask.pipeline?.name || "MISSING") + " | Step: " + currentStepIndex + "\n"); const pipelineName = existingTask.pipeline?.name;
+  const currentStepIndex = existingTask.step_index || 1; // 1-based in DB
 
   // Mark current task as done
   await supabase
@@ -35,7 +35,6 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
   }
 
   const flow = WORKFLOWS[pipelineName];
-  const currentStep = flow[currentStepIndex];
 
   if (outcome === "afspraak") {
     // Afspraak gemaakt -> Deal Gewonnen. Stop flow.
@@ -58,23 +57,28 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
     });
   } else if (outcome === "niet_opgenomen" || outcome === "kaartje_verstuurd" || outcome === "afgerond") {
     // Advance to next step in the flow
-    const nextStepIndex = currentStepIndex + 1;
     
     // Check if we need to send a WhatsApp template for THIS step
+    // Templates use 1-based step_index, matching the task's step_index
     const { data: stepTemplate } = await supabase
       .from("templates")
       .select("whatsapp_template, email_template, variable_mapping")
       .eq("pipeline_name", pipelineName)
-      .eq("step_index", currentStepIndex + 1)
+      .eq("step_index", currentStepIndex)
       .eq("action_type", outcome)
       .single();
 
-    if (stepTemplate?.whatsapp_template && existingTask.patient?.phone) {
-      await sendWhatsAppTemplate(existingTask.patient.phone, stepTemplate.whatsapp_template, existingTask.patient, stepTemplate.variable_mapping || {});
+    require("fs").appendFileSync("advance_log.txt", "\nstepTemplate: " + JSON.stringify(stepTemplate) + "\nPhone: " + existingTask.patient?.phone + "\n"); if (stepTemplate?.whatsapp_template if (stepTemplate?.whatsapp_template && existingTask.patient?.phone)if (stepTemplate?.whatsapp_template && existingTask.patient?.phone) existingTask.patient?.phone) {
+      require("fs").appendFileSync("error_log.txt", "\n[task.ts] Sending WhatsApp: " + stepTemplate.whatsapp_template + "\n"); console.log("[task.ts] Sending WhatsApp:", stepTemplate.whatsapp_template, "to", existingTask.patient.phone);
+      const res = await sendWhatsAppTemplate(existingTask.patient.phone, stepTemplate.whatsapp_template, existingTask.patient, stepTemplate.variable_mapping || {});
+      console.log("[task.ts] WhatsApp result:", res);
+    } else {
+      console.log("[task.ts] Skipping WhatsApp. stepTemplate:", stepTemplate, "phone:", existingTask.patient?.phone);
     }
 
-    if (nextStepIndex < flow.length) {
-      const nextStep = flow[nextStepIndex];
+    // flow array is 0-based. If currentStepIndex is 1, the next step is at index 1.
+    if (currentStepIndex < flow.length) {
+      const nextStep = flow[currentStepIndex];
       const scheduledDate = calculateNextScheduledDate(nextStep.delayHours);
       
       await supabase.from("tasks").insert({
@@ -83,7 +87,7 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
         title: nextStep.title,
         status: "open", // Fallback for Kanban, will be filtered dynamically by scheduled_for
         scheduled_for: scheduledDate.toISOString(),
-        step_index: nextStepIndex
+        step_index: currentStepIndex + 1
       });
     } else {
       // Flow has reached the end and they didn't pick up

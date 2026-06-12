@@ -165,7 +165,7 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
                   defaultValue={editingStep.task_type}
                   className="w-full border border-slate-200 rounded-xl p-3 focus:ring-primary focus:border-primary bg-white text-slate-700"
                 >
-                  <option value="call">Beltaak (Opgenomen, Niet opgenomen)</option>
+                  <option value="call">Beltaak (Niet opgenomen)</option>
                   <option value="send_card">Kaartje sturen (Afgerond)</option>
                   <option value="manual_check">Handmatige Check (Afgerond)</option>
                 </select>

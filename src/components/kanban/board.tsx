@@ -107,9 +107,9 @@ function TaskCard({ task, templates = [], onClick }: { task: any, templates?: an
                 e.stopPropagation(); 
                 
                 // Check if there is a template
-                const stepIndex = task.step_index || 0;
+                const stepIndex = task.step_index || 1;
                 const hasTemplate = templates.some(
-                  (t: any) => t.pipeline_name === pipelineName && t.step_index === (stepIndex + 1) && t.action_type === "niet_opgenomen" && (t.whatsapp_template || t.email_template)
+                  (t: any) => t.pipeline_name === pipelineName && t.step_index === stepIndex && t.action_type === "niet_opgenomen" && (t.whatsapp_template || t.email_template)
                 );
 
                 if (hasTemplate) {

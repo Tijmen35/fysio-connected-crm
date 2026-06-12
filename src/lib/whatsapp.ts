@@ -2,6 +2,7 @@ export interface WhatsAppTemplate {
   name: string;
   language: string;
   status: string;
+  parameter_format?: string;
   components: any[];
 }
 
@@ -29,7 +30,7 @@ export async function getWhatsAppTemplates(): Promise<WhatsAppTemplate[]> {
     });
     
     if (!res.ok) throw new Error("Failed to fetch templates");
-    const data = await res.json();
+    const data = await res.json(); require("fs").appendFileSync("whatsapp_log.txt", "\n[whatsapp.ts] Response: " + JSON.stringify(data) + "\n");
     return data.data || [];
   } catch (error) {
     console.error("WhatsApp API Error:", error);
@@ -87,7 +88,12 @@ export async function sendWhatsAppTemplate(to: string, templateName: string, pat
       else if (field === "email") val = patient.email || "";
       else if (field === "location") val = patient.location || "";
       
-      parameters.push({ type: "text", text: val || " " }); // Meta errors on empty strings
+      const paramObj: any = { type: "text", text: val || " " };
+      if (t?.parameter_format === "NAMED") {
+        paramObj.parameter_name = key;
+      }
+      
+      parameters.push(paramObj); // Meta errors on empty strings
     }
   }
 
@@ -128,13 +134,13 @@ export async function sendWhatsAppTemplate(to: string, templateName: string, pat
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("WhatsApp API Send Error:", errorData);
-      return { success: false, error: errorData };
+      require("fs").appendFileSync("whatsapp_error.txt", "\n[whatsapp.ts] Send Error: " + JSON.stringify(errorData) + "\n"); console.error("WhatsApp API Send Error:", errorData);
+      return { success: false, error: JSON.stringify(errorData) };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("WhatsApp API Network Error:", error);
-    return { success: false, error };
+    require("fs").appendFileSync("whatsapp_error.txt", "\n[whatsapp.ts] Network Error: " + String(error) + "\n"); console.error("WhatsApp API Network Error:", error);
+    return { success: false, error: String(error) };
   }
 }
