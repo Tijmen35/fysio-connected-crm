@@ -5,31 +5,39 @@ import { revalidatePath } from "next/cache";
 import { WORKFLOWS, calculateNextScheduledDate } from "@/lib/workflows";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+
 export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) {
-  const supabase = await createClient();
+
+  const adminAuthClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const supabase = adminAuthClient;
 
   // Get the existing task
-  const { data: existingTask } = await supabase
+  const { data: existingTask, error: taskErr } = await supabase
     .from("tasks")
-    .select("*, pipeline:pipelines(name), patient:patients(full_name, phone)")
+    .select("*, patient:patients(*), pipeline:pipelines(name)")
     .eq("id", taskId)
     .single();
 
-  if (!existingTask) return { success: false, error: "Task not found" };
+  if (taskErr || !existingTask) {
+    return { success: false, error: "Task not found" };
+  }
 
   const pipelineName = existingTask.pipeline?.name;
   const currentStepIndex = existingTask.step_index || 1; // 1-based in DB
 
+
   // Mark current task as done
   await supabase
     .from("tasks")
-    .update({ 
-      status: "closed"
-    })
+    .update({ status: "closed" })
     .eq("id", taskId);
 
   if (!pipelineName || !WORKFLOWS[pipelineName]) {
-    // If no workflow definition exists for this pipeline, just complete the task
     revalidatePath("/");
     return { success: true };
   }
@@ -37,30 +45,23 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
   const flow = WORKFLOWS[pipelineName];
 
   if (outcome === "afspraak") {
-    // Afspraak gemaakt -> Deal Gewonnen. Stop flow.
-    // We could update a patient status field here, but for now we just stop scheduling next steps.
   } else if (outcome === "afwijzing" || outcome === "geen_interesse") {
-    // Geen interesse -> Deal Verloren. Stop flow.
   } else if ((outcome === "terugbellen" || outcome === "ander_moment") && scheduleDate) {
-    // Reschedule the CURRENT step for another moment, outside the standard trajectory
     const dateObj = new Date(scheduleDate);
     const timeString = dateObj.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
     
     await supabase.from("tasks").insert({
       patient_id: existingTask.patient_id,
-      pipeline_id: existingTask.pipeline_id, // Keep in pipeline to show in timeline
+      pipeline_id: existingTask.pipeline_id,
       title: "Terugbellen",
       description: `Bellen om ${timeString}`,
-      status: "later", // UI will use scheduled_for
+      status: "later",
       scheduled_for: dateObj.toISOString(),
       step_index: null
     });
   } else if (outcome === "niet_opgenomen" || outcome === "kaartje_verstuurd" || outcome === "afgerond") {
-    // Advance to next step in the flow
     
-    // Check if we need to send a WhatsApp template for THIS step
-    // Templates use 1-based step_index, matching the task's step_index
-    const { data: stepTemplate } = await supabase
+    const { data: stepTemplate, error: tplErr } = await supabase
       .from("templates")
       .select("whatsapp_template, email_template, variable_mapping")
       .eq("pipeline_name", pipelineName)
@@ -68,31 +69,28 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
       .eq("action_type", outcome)
       .single();
 
+
     if (stepTemplate?.whatsapp_template && existingTask.patient?.phone) {
-      console.log("[task.ts] Sending WhatsApp:", stepTemplate.whatsapp_template, "to", existingTask.patient.phone);
-      const res = await sendWhatsAppTemplate(existingTask.patient.phone, stepTemplate.whatsapp_template, existingTask.patient, stepTemplate.variable_mapping || {});
-      console.log("[task.ts] WhatsApp result:", res);
+      try {
+        const res = await sendWhatsAppTemplate(existingTask.patient.phone, stepTemplate.whatsapp_template, existingTask.patient, stepTemplate.variable_mapping || {});
+      } catch(waErr) {
+      }
     } else {
-      console.log("[task.ts] Skipping WhatsApp. stepTemplate:", stepTemplate, "phone:", existingTask.patient?.phone);
     }
 
-    // flow array is 0-based. If currentStepIndex is 1, the next step is at index 1.
     if (currentStepIndex < flow.length) {
       const nextStep = flow[currentStepIndex];
       const scheduledDate = calculateNextScheduledDate(nextStep.delayHours);
       
-      await supabase.from("tasks").insert({
+      const { error: insErr } = await supabase.from("tasks").insert({
         patient_id: existingTask.patient_id,
         pipeline_id: existingTask.pipeline_id,
         title: nextStep.title,
-        status: "open", // Fallback for Kanban, will be filtered dynamically by scheduled_for
+        status: "open",
         scheduled_for: scheduledDate.toISOString(),
         step_index: currentStepIndex + 1
       });
     } else {
-      // Flow has reached the end and they didn't pick up
-      // e.g. "Systeem sluit de deal direct automatisch af als 'Verloren – Geen reactie na 14 dagen'"
-      // This is handled automatically by simply not scheduling a new task.
     }
   }
 
