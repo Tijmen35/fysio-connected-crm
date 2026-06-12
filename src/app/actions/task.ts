@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { WORKFLOWS, calculateNextScheduledDate } from "@/lib/workflows";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
-export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) { require("fs").appendFileSync("advance_log.txt", "\n--- START advanceWorkflow --- \nTaskID: " + taskId + " \nOutcome: " + outcome + "\n");
+export async function advanceWorkflow(taskId: string, outcome: string, scheduleDate?: string) {
   const supabase = await createClient();
 
   // Get the existing task
@@ -17,7 +17,7 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
 
   if (!existingTask) return { success: false, error: "Task not found" };
 
-  require("fs").appendFileSync("advance_log.txt", "\npipelineName: " + (existingTask.pipeline?.name || "MISSING") + " | Step: " + currentStepIndex + "\n"); const pipelineName = existingTask.pipeline?.name;
+  const pipelineName = existingTask.pipeline?.name;
   const currentStepIndex = existingTask.step_index || 1; // 1-based in DB
 
   // Mark current task as done
@@ -68,8 +68,8 @@ export async function advanceWorkflow(taskId: string, outcome: string, scheduleD
       .eq("action_type", outcome)
       .single();
 
-    require("fs").appendFileSync("advance_log.txt", "\nstepTemplate: " + JSON.stringify(stepTemplate) + "\nPhone: " + existingTask.patient?.phone + "\n"); if (stepTemplate?.whatsapp_template if (stepTemplate?.whatsapp_template && existingTask.patient?.phone)if (stepTemplate?.whatsapp_template && existingTask.patient?.phone) existingTask.patient?.phone) {
-      require("fs").appendFileSync("error_log.txt", "\n[task.ts] Sending WhatsApp: " + stepTemplate.whatsapp_template + "\n"); console.log("[task.ts] Sending WhatsApp:", stepTemplate.whatsapp_template, "to", existingTask.patient.phone);
+    if (stepTemplate?.whatsapp_template && existingTask.patient?.phone) {
+      console.log("[task.ts] Sending WhatsApp:", stepTemplate.whatsapp_template, "to", existingTask.patient.phone);
       const res = await sendWhatsAppTemplate(existingTask.patient.phone, stepTemplate.whatsapp_template, existingTask.patient, stepTemplate.variable_mapping || {});
       console.log("[task.ts] WhatsApp result:", res);
     } else {
