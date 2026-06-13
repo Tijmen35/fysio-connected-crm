@@ -21,6 +21,10 @@ export default async function DashboardPage() {
     console.error("Error fetching tasks:", error);
   }
 
+  const { data: bellijstContacts } = await supabase
+    .from("bellijst_contacts")
+    .select("id, list_name, status");
+
   const { data: templates } = await supabase
     .from("templates")
     .select("pipeline_name, step_index, action_type, whatsapp_template, email_template, custom_title");
@@ -39,5 +43,14 @@ export default async function DashboardPage() {
     }
   }
 
-  return <KanbanBoard initialTasks={tasks || []} templates={templates || []} userName={userName} />;
+  return (
+    <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 h-[calc(100vh-4rem)]">
+      <KanbanBoard 
+        initialTasks={tasks || []} 
+        templates={templates || []} 
+        userName={userName} 
+        bellijsten={bellijstContacts || []}
+      />
+    </div>
+  );
 }

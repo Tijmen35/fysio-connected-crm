@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { PatientProfile } from "./patient-profile";
 import { ScriptModal } from "@/components/modals/script-modal";
 import Link from "next/link";
@@ -174,7 +174,7 @@ function TaskCard({ task, templates = [], onClick, onViewScript }: { task: any, 
   );
 }
 
-export function KanbanBoard({ initialTasks = [], templates = [], userName = "Collega" }: { initialTasks?: any[], templates?: any[], userName?: string }) {
+export function KanbanBoard({ initialTasks = [], templates = [], userName = "Collega", bellijsten = [] }: { initialTasks?: any[], templates?: any[], userName?: string, bellijsten?: any[] }) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [viewScript, setViewScript] = useState<string | null>(null);
 
@@ -214,25 +214,25 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
     const dt = new Date(t.scheduled_for);
     return dt > endOfTomorrow;
   });
-  
-  const belvoorraad = initialTasks.filter(t => t.status === "belvoorraad");
-  
-  // Group belvoorraad per tag/pipeline and show only the first task per tag
-  const belvoorraadPerPipeline = new Map();
-  belvoorraad.forEach(task => {
-    if (!belvoorraadPerPipeline.has(task.pipeline_id)) {
-      belvoorraadPerPipeline.set(task.pipeline_id, task);
-    }
-  });
-  const activeBelvoorraadTasks = Array.from(belvoorraadPerPipeline.values());
-
   const TASKS = {
     vandaagOchtend,
     vandaagMiddag,
     morgen,
-    overmorgen,
-    belvoorraad
+    overmorgen
   };
+
+  const bellijstGroups = useMemo(() => {
+    const groups: Record<string, { name: string, total: number, uncalled: number }> = {};
+    bellijsten.forEach(c => {
+      if (!groups[c.list_name]) groups[c.list_name] = { name: c.list_name, total: 0, uncalled: 0 };
+      groups[c.list_name].total += 1;
+      const isFinished = c.status === "geen_interesse" || c.status === "afspraak_gemaakt" || c.status === "niet_opgenomen_definitief";
+      if (!isFinished) groups[c.list_name].uncalled += 1;
+    });
+    return Object.values(groups);
+  }, [bellijsten]);
+
+  const totalUncalledBellijsten = bellijstGroups.reduce((acc, g) => acc + g.uncalled, 0);
 
   return (
     <>
@@ -260,19 +260,19 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-card flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Taken Vandaag</p>
-                <h4 className="text-3xl font-bold text-slate-800">3</h4>
-                <span className="text-xs text-slate-400 font-semibold flex items-center gap-1">
-                  <i className="fa-regular fa-clock"></i> Deadline voor 17:00
+                <h4 className="text-3xl font-bold text-slate-800">{TASKS.vandaagOchtend.length + TASKS.vandaagMiddag.length}</h4>
+                <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1">
+                  <i className="fa-solid fa-calendar-day"></i> Prioriteit
                 </span>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-slate-50 text-slate-500 flex items-center justify-center text-xl">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
                 <i className="fa-solid fa-list-check"></i>
               </div>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-card flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Belvoorraad</p>
-                <h4 className="text-3xl font-bold text-slate-800">2</h4>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Belvoorraad (Wachtkamer)</p>
+                <h4 className="text-3xl font-bold text-slate-800">{totalUncalledBellijsten}</h4>
                 <span className="text-xs text-primary font-semibold flex items-center gap-1">
                   <i className="fa-solid fa-phone"></i> Cold calling pool
                 </span>
@@ -369,39 +369,34 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                       Belvoorraad
                     </span>
                     <span className="bg-slate-200/60 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">
-                      {TASKS.belvoorraad.length}
+                      {totalUncalledBellijsten}
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                      <span>Belteller</span>
-                      <span>0 / {TASKS.belvoorraad.length} afgerond</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5">
-                      <div className="bg-primary h-1.5 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
-                    </div>
-                  </div>
                   <Link href="/bellijsten" className="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                    <i className="fa-solid fa-file-excel text-emerald-600"></i> Importeer Excel
+                    <i className="fa-solid fa-file-excel text-emerald-600"></i> Naar Wachtkamer
                   </Link>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto">
-                  {activeBelvoorraadTasks.map(task => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
-                      onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} 
-                      onViewScript={() => {
-                        const script = typeof task.pipeline === 'object' && !Array.isArray(task.pipeline) 
-                          ? task.pipeline.description 
-                          : (Array.isArray(task.pipeline) ? task.pipeline[0]?.description : "");
-                        setViewScript(script || "Geen script ingesteld voor deze lijst.");
-                      }}
-                    />
+                  {bellijstGroups.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-24 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                      <span className="text-xs font-semibold">Geen lijsten</span>
+                    </div>
+                  )}
+                  {bellijstGroups.map(group => (
+                    <Link key={group.name} href="/bellijsten" className="block bg-white p-3 rounded-xl border border-slate-200/60 shadow-sm hover:border-primary/50 transition-all group/card">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary font-bold text-xs">
+                          <i className="fa-solid fa-list"></i>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-800 text-sm truncate">{group.name}</p>
+                          <p className="text-xs font-semibold text-slate-500">{group.uncalled} van {group.total} bellen</p>
+                        </div>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               </div>
-
             </div>
           </div>
 
