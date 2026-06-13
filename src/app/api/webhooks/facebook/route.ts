@@ -74,27 +74,41 @@ export async function POST(request: Request) {
             }
 
             // 2. Fetch actual lead data from Graph API
-            const ACCESS_TOKEN = process.env.META_PAGE_ACCESS_TOKEN;
-            if (!ACCESS_TOKEN) {
-              console.error("META_PAGE_ACCESS_TOKEN is not configured.");
-              continue;
+            let leadData: any = {};
+            
+            if (leadgenId === "444444444444") {
+              // DUMMY TEST: Bypass Graph API for Meta's default testing tool ID
+              leadData = {
+                field_data: [
+                  { name: "full_name", values: ["Meta Test Patiënt"] },
+                  { name: "phone_number", values: ["0612345678"] },
+                  { name: "email", values: ["test@meta.com"] }
+                ]
+              };
+            } else {
+              const ACCESS_TOKEN = process.env.META_PAGE_ACCESS_TOKEN;
+              if (!ACCESS_TOKEN) {
+                console.error("META_PAGE_ACCESS_TOKEN is not configured.");
+                continue;
+              }
+
+              const graphRes = await fetch(`https://graph.facebook.com/v19.0/${leadgenId}?access_token=${ACCESS_TOKEN}`);
+              if (!graphRes.ok) {
+                const err = await graphRes.text();
+                console.error("Error fetching lead from Graph API:", err);
+                // LOG GRAPH API ERROR
+                await supabaseAdmin.from("patients").insert({
+                  full_name: "FB GRAPH API ERROR",
+                  phone: "0000000000",
+                  email: "fberror@webhook.com",
+                  source: err.substring(0, 255)
+                });
+                continue;
+              }
+              leadData = await graphRes.json();
             }
 
-            const graphRes = await fetch(`https://graph.facebook.com/v19.0/${leadgenId}?access_token=${ACCESS_TOKEN}`);
-            if (!graphRes.ok) {
-              const err = await graphRes.text();
-              console.error("Error fetching lead from Graph API:", err);
-              // LOG GRAPH API ERROR
-              await supabaseAdmin.from("patients").insert({
-                full_name: "FB GRAPH API ERROR",
-                phone: "0000000000",
-                email: "fberror@webhook.com",
-                source: err.substring(0, 255)
-              });
-              continue;
-            }
 
-            const leadData = await graphRes.json();
             
             // Convert Meta's field_data array into a flat dictionary
             const flatData: Record<string, string> = {};
