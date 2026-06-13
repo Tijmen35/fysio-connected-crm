@@ -233,6 +233,7 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
   }, [bellijsten]);
 
   const totalUncalledBellijsten = bellijstGroups.reduce((acc, g) => acc + g.uncalled, 0);
+  const totalCalledBellijsten = bellijstGroups.reduce((acc, g) => acc + (g.total - g.uncalled), 0);
 
   return (
     <>
@@ -271,8 +272,8 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-card flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Belvoorraad (Wachtkamer)</p>
-                <h4 className="text-3xl font-bold text-slate-800">{totalUncalledBellijsten}</h4>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mensen benaderd (Bellijsten)</p>
+                <h4 className="text-3xl font-bold text-slate-800">{totalCalledBellijsten}</h4>
                 <span className="text-xs text-primary font-semibold flex items-center gap-1">
                   <i className="fa-solid fa-phone"></i> Cold calling pool
                 </span>
