@@ -132,7 +132,9 @@ export async function POST(request: Request) {
               email: extractField("email"),
               location: mapping._static_location || extractField("location"),
               primary_complaint: extractField("primary_complaint"),
-              source: `Facebook Lead Ads (Form: ${formId})`
+              source: `Facebook Lead Ads (Form: ${formId})`,
+              active_pipeline_id: config.pipeline_id || null,
+              pipeline_stage: "Nieuwe lead"
             };
 
             // 4. Upsert patient
@@ -173,7 +175,7 @@ export async function POST(request: Request) {
                 patient_id: patientId,
                 pipeline_id: config.pipeline_id,
                 title: "Nieuwe Facebook lead opvolgen",
-                status: "belvoorraad"
+                status: "vandaag"
               });
               if (taskError) console.error("Error creating task:", taskError);
             }

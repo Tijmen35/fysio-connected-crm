@@ -67,7 +67,9 @@ export async function POST(
       email: extractField("email"),
       location: mapping._static_location || extractField("location"),
       primary_complaint: extractField("primary_complaint"),
-      source: `Webflow formulier (${config.name})`
+      source: `Webflow formulier (${config.name})`,
+      active_pipeline_id: config.pipeline_id || null,
+      pipeline_stage: "Nieuwe lead"
     };
 
     // 3. Upsert or insert patient
@@ -109,11 +111,11 @@ export async function POST(
 
     // 4. Create first task in the correct pipeline
     if (config.pipeline_id) {
-      const { error: taskError } = await supabaseAdmin.from("tasks").insert({
+      const { error: taskError } = await supabaseAdmin.from('tasks').insert({
         patient_id: patientId,
         pipeline_id: config.pipeline_id,
-        title: "Nieuwe lead opvolgen",
-        status: "belvoorraad" // So it appears correctly in kanban
+        title: "Nieuwe website lead opvolgen",
+        status: "vandaag" // Place it in Vandaag column of Werkdag Overzicht
       });
       if (taskError) {
         console.error("Error creating task:", taskError);
