@@ -31,7 +31,7 @@ export async function getWhatsAppTemplates(): Promise<WhatsAppTemplate[]> {
     });
     
     if (!res.ok) throw new Error("Failed to fetch templates");
-    const data = await res.json(); require("fs").appendFileSync("whatsapp_log.txt", "\n[whatsapp.ts] Response: " + JSON.stringify(data) + "\n");
+    const data = await res.json();
     return data.data || [];
   } catch (error) {
     console.error("WhatsApp API Error:", error);
@@ -138,13 +138,13 @@ export async function sendWhatsAppTemplate(to: string, templateName: string, pat
 
     if (!res.ok) {
       const errorData = await res.json();
-      require("fs").appendFileSync("whatsapp_error.txt", "\n[whatsapp.ts] Send Error: " + JSON.stringify(errorData) + "\n"); console.error("WhatsApp API Send Error:", errorData);
+      console.error("WhatsApp API Send Error:", errorData);
       return { success: false, error: JSON.stringify(errorData) };
     }
 
     return { success: true };
   } catch (error) {
-    require("fs").appendFileSync("whatsapp_error.txt", "\n[whatsapp.ts] Network Error: " + String(error) + "\n"); console.error("WhatsApp API Network Error:", error);
+    console.error("WhatsApp API Network Error:", error);
     return { success: false, error: String(error) };
   }
 }

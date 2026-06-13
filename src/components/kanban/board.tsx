@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { PatientProfile } from "./patient-profile";
 import { ScriptModal } from "@/components/modals/script-modal";
+import Link from "next/link";
 
 import { useModalStore } from "@/store/modalStore";
 
@@ -380,9 +381,9 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                       <div className="bg-primary h-1.5 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
                     </div>
                   </div>
-                  <button className="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                  <Link href="/bellijsten" className="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
                     <i className="fa-solid fa-file-excel text-emerald-600"></i> Importeer Excel
-                  </button>
+                  </Link>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto">
                   {activeBelvoorraadTasks.map(task => (
