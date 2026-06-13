@@ -366,14 +366,14 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-slate-700 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                      Belvoorraad
+                      Bellijsten
                     </span>
                     <span className="bg-slate-200/60 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">
                       {totalUncalledBellijsten}
                     </span>
                   </div>
                   <Link href="/bellijsten" className="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                    <i className="fa-solid fa-file-excel text-emerald-600"></i> Naar Wachtkamer
+                    <i className="fa-solid fa-file-excel text-emerald-600"></i> Upload Excel
                   </Link>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto">
