@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { InstellingenClient } from "@/components/instellingen/instellingen-client";
 import { getWhatsAppTemplates } from "@/lib/whatsapp";
 
+export const dynamic = "force-dynamic";
+
 export default async function InstellingenPage() {
   const supabase = await createClient();
   

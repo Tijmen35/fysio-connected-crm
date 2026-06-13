@@ -26,7 +26,8 @@ export async function getWhatsAppTemplates(): Promise<WhatsAppTemplate[]> {
     const res = await fetch(`https://graph.facebook.com/v19.0/${WA_BUSINESS_ID}/message_templates`, {
       headers: {
         Authorization: `Bearer ${WA_TOKEN}`
-      }
+      },
+      cache: "no-store"
     });
     
     if (!res.ok) throw new Error("Failed to fetch templates");
