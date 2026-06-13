@@ -14,6 +14,8 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
   const [selectedWaTemplateName, setSelectedWaTemplateName] = useState<string>("");
   const [variableMapping, setVariableMapping] = useState<Record<string, string>>({});
 
+  const [expandedPipelines, setExpandedPipelines] = useState<Record<string, boolean>>({});
+
   const [isPending, startTransition] = useTransition();
 
   // Group templates by pipeline
@@ -49,15 +51,25 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
 
           return (
             <div key={pipeline as string} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <span className={`px-3 py-1 rounded-lg text-sm font-bold border ${getPipelineColor(pipeline as string)}`}>
-                  {pipeline as string}
-                </span>
+              <button 
+                onClick={() => setExpandedPipelines(prev => ({ ...prev, [pipeline as string]: !prev[pipeline as string] }))}
+                className="w-full px-6 py-5 border-b border-slate-100 bg-slate-50/50 hover:bg-slate-100/50 flex justify-between items-center transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-200 ${expandedPipelines[pipeline as string] ? 'rotate-180 bg-slate-200 text-slate-600' : 'bg-white text-slate-400 border border-slate-200 shadow-sm'}`}>
+                    <i className="fa-solid fa-chevron-down text-sm"></i>
+                  </div>
+                  <span className={`px-3 py-1 rounded-lg text-sm font-bold border ${getPipelineColor(pipeline as string)}`}>
+                    {pipeline as string}
+                  </span>
+                </div>
                 <span className="text-xs font-semibold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200">{steps.length} stappen</span>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {steps.map(stepIndex => {
-                  const stepTemplates = pipelineTemplates.filter(t => t.step_index === stepIndex);
+              </button>
+
+              {expandedPipelines[pipeline as string] && (
+                <div className="divide-y divide-slate-100 animate-in slide-in-from-top-2 fade-in duration-200">
+                  {steps.map(stepIndex => {
+                    const stepTemplates = pipelineTemplates.filter(t => t.step_index === stepIndex);
                   const firstTpl = stepTemplates[0];
                   const taskType = firstTpl.task_type || "call";
                   const customTitle = firstTpl.custom_title;
@@ -125,6 +137,7 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
                   );
                 })}
               </div>
+              )}
             </div>
           );
         })}
