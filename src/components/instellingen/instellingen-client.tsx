@@ -19,6 +19,14 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
   // Group templates by pipeline
   const pipelines = [...new Set(templates.map(t => t.pipeline_name))];
 
+  function getPipelineColor(name: string) {
+    const lower = name.toLowerCase();
+    if (lower.includes("lead")) return "bg-amber-100 text-amber-700 border-amber-200";
+    if (lower.includes("show") || lower.includes("ziek")) return "bg-red-100 text-red-700 border-red-200";
+    if (lower.includes("nazorg")) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    return "bg-blue-100 text-blue-700 border-blue-200";
+  }
+
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-8 h-[calc(100vh-4rem)]">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -41,8 +49,11 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
 
           return (
             <div key={pipeline as string} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-900 text-white p-4">
-                <h3 className="font-bold text-lg">{pipeline as string}</h3>
+              <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <span className={`px-3 py-1 rounded-lg text-sm font-bold border ${getPipelineColor(pipeline as string)}`}>
+                  {pipeline as string}
+                </span>
+                <span className="text-xs font-semibold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200">{steps.length} stappen</span>
               </div>
               <div className="divide-y divide-slate-100">
                 {steps.map(stepIndex => {
