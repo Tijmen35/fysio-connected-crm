@@ -34,11 +34,9 @@ export function PatientProfile({ isOpen, patientId, onClose, onSaved }: { isOpen
   }, [tasks, activePipelineTab]);
 
   useEffect(() => {
-    console.log("PatientProfile opened with patientId:", patientId);
     if (isOpen && patientId) {
       setIsLoading(true);
       getPatientDetails(patientId).then(res => {
-        console.log("PatientProfile getPatientDetails res:", res);
         if (res.patient) {
           setPatient(res.patient);
           setName(res.patient.full_name || "");

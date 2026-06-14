@@ -39,9 +39,6 @@ export default async function WerknemersPage() {
       .eq("id", user.id)
       .single();
     
-    console.log("Current User ID:", user.id);
-    console.log("Current User Profile:", currentUserProfile, "Error:", profileError);
-    
     isAdmin = currentUserProfile?.role === "admin";
     if (!isAdmin) {
       redirect("/");

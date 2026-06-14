@@ -92,7 +92,6 @@ export async function createPatient(formData: FormData) {
 }
 
 export async function getPatientDetails(patientId: string) {
-  console.log("getPatientDetails called with:", patientId);
   if (!patientId) return { error: "No patientId provided" };
 
   const supabase = await createClient();

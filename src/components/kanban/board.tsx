@@ -23,11 +23,6 @@ function TaskCard({ task, templates = [], waTemplates = [], onClick, onViewScrip
     (t: any) => t.pipeline_name === pipelineName && t.step_index === task.step_index
   );
   
-  if (task.patient?.full_name === "Tijmen Lourens") {
-    console.log("DEBUG TIJMEN TASK:", JSON.stringify(task, null, 2));
-    console.log("DEBUG PIPELINE NAME RESOLVED:", pipelineName);
-  }
-
   let displayTitle = stepTemplate?.custom_title || task.title || task.action;
   
   if (task.status === "later" && task.scheduled_for) {
