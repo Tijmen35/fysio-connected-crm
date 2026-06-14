@@ -264,8 +264,15 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
               </div>
 
               {selectedWaTemplateName && (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase">Variabelen koppelen</h4>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                  {waTemplates.find(t => t.name === selectedWaTemplateName)?.components.filter((c: any) => c.type === "BODY").map((c: any, i: number) => (
+                    <div key={i} className="bg-emerald-50 text-emerald-900 p-3 rounded-lg border border-emerald-200 text-sm italic shadow-sm">
+                      "{c.text}"
+                    </div>
+                  ))}
+                  
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase">Variabelen koppelen</h4>
                   {waTemplates.find(t => t.name === selectedWaTemplateName)?.components.map((c: any) => {
                     if (c.type === "BODY") {
                       const text = c.text;
@@ -303,6 +310,7 @@ export function InstellingenClient({ initialTemplates, waTemplates = [] }: { ini
                     <p className="text-xs text-slate-400 italic">Deze template bevat geen variabelen.</p>
                   )}
                 </div>
+              </div>
               )}
 
               <div className="pt-4 flex justify-end gap-3">
