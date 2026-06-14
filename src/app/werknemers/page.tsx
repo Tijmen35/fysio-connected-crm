@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import WerknemersClient from "./werknemers-client";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,9 @@ export default async function WerknemersPage() {
     console.log("Current User Profile:", currentUserProfile, "Error:", profileError);
     
     isAdmin = currentUserProfile?.role === "admin";
+    if (!isAdmin) {
+      redirect("/");
+    }
   }
 
   return (

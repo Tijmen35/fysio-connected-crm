@@ -1,10 +1,7 @@
-export const dynamic = "force-dynamic";
-
 import { createClient } from "@/utils/supabase/server";
-import { BellijstenClient } from "@/components/bellijsten/bellijsten-client";
 import { redirect } from "next/navigation";
 
-export default async function BellijstenPage() {
+export default async function PipelinesLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -12,22 +9,12 @@ export default async function BellijstenPage() {
     const { createClient: createAdminClient } = await import('@supabase/supabase-js');
     const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     const { data: profile } = await adminClient.from("profiles").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") {
-      redirect("/");
+    if (profile?.role === "fysiotherapeut") {
+      redirect("/klanten");
     }
   } else {
     redirect("/login");
   }
-  
-  // Haal alle bellijst contacten op uit de geïsoleerde tabel
-  const { data: contacts, error } = await supabase
-    .from("bellijst_contacts")
-    .select("*")
-    .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching bellijsten:", error);
-  }
-
-  return <BellijstenClient initialContacts={contacts || []} />;
+  return <>{children}</>;
 }
