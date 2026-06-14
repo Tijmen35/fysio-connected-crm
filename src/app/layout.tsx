@@ -25,9 +25,24 @@ export default async function RootLayout({
   const { data: { user } } = await supabase.auth.getUser();
   
   let userProfile = null;
+  let fysiotherapeuten: { id: string; full_name: string }[] = [];
+
   if (user) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-    userProfile = data;
+    const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
+    const adminAuthClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+    userProfile = profile;
+
+    const { data: fysios } = await adminAuthClient
+      .from("profiles")
+      .select("id, full_name")
+      .eq("role", "fysiotherapeut");
+    
+    if (fysios) fysiotherapeuten = fysios;
   }
 
   return (
@@ -39,7 +54,7 @@ export default async function RootLayout({
         <AppLayout userProfile={userProfile}>
           {children}
         </AppLayout>
-        <NewPatientModal />
+        <NewPatientModal fysiotherapeuten={fysiotherapeuten} currentUserProfile={userProfile} />
         <CallOutcomeModal />
         <NoAnswerModal />
       </body>

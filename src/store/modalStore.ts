@@ -7,6 +7,7 @@ interface ModalState {
 
   activeTaskId: string | null;
   activePatientName: string | null;
+  activePreviewText?: string | null;
   lastCompletedTaskId: string | null;
 
   isCallOutcomeModalOpen: boolean;
@@ -14,7 +15,7 @@ interface ModalState {
   closeCallOutcomeModal: () => void;
 
   isNoAnswerModalOpen: boolean;
-  openNoAnswerModal: (taskId: string, patientName: string) => void;
+  openNoAnswerModal: (taskId: string, patientName: string, previewText?: string) => void;
   closeNoAnswerModal: () => void;
   setLastCompletedTaskId: (taskId: string | null) => void;
 }
@@ -26,6 +27,7 @@ export const useModalStore = create<ModalState>((set) => ({
 
   activeTaskId: null,
   activePatientName: null,
+  activePreviewText: null,
   lastCompletedTaskId: null,
 
   isCallOutcomeModalOpen: false,
@@ -33,7 +35,7 @@ export const useModalStore = create<ModalState>((set) => ({
   closeCallOutcomeModal: () => set({ isCallOutcomeModalOpen: false, activeTaskId: null, activePatientName: null }),
 
   isNoAnswerModalOpen: false,
-  openNoAnswerModal: (taskId, patientName) => set({ isNoAnswerModalOpen: true, activeTaskId: taskId, activePatientName: patientName }),
-  closeNoAnswerModal: () => set({ isNoAnswerModalOpen: false, activeTaskId: null, activePatientName: null }),
+  openNoAnswerModal: (taskId, patientName, previewText) => set({ isNoAnswerModalOpen: true, activeTaskId: taskId, activePatientName: patientName, activePreviewText: previewText }),
+  closeNoAnswerModal: () => set({ isNoAnswerModalOpen: false, activeTaskId: null, activePatientName: null, activePreviewText: null }),
   setLastCompletedTaskId: (taskId) => set({ lastCompletedTaskId: taskId }),
 }));

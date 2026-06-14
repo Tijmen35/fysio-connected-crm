@@ -18,6 +18,18 @@ export default async function WerknemersPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  // Fetch emails from auth.users to attach to profiles
+  const { data: authUsersData } = await adminClient.auth.admin.listUsers();
+  const users = authUsersData?.users || [];
+  
+  const profilesWithEmail = profiles?.map(profile => {
+    const userMatch = users.find(u => u.id === profile.id);
+    return {
+      ...profile,
+      email: userMatch?.email || null,
+    };
+  }) || [];
+
   let isAdmin = false;
   if (user) {
     const { data: currentUserProfile, error: profileError } = await adminClient
@@ -46,7 +58,7 @@ export default async function WerknemersPage() {
           </div>
         </div>
 
-        <WerknemersClient initialProfiles={profiles || []} isAdmin={isAdmin} />
+        <WerknemersClient initialProfiles={profilesWithEmail} isAdmin={isAdmin} />
 
       </div>
     </div>

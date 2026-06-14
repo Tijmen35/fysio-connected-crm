@@ -1,34 +1,38 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { inviteUser, updateUserRole, deleteUser } from "@/app/actions/auth";
+import { inviteUser, updateUserRole, deleteUser, resetUserPassword } from "@/app/actions/auth";
 
 export default function WerknemersClient({ initialProfiles, isAdmin }: { initialProfiles: any[], isAdmin: boolean }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [generatedInviteLink, setGeneratedInviteLink] = useState<string | null>(null);
 
   const handleInvite = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const fullName = formData.get("full_name") as string;
-    const role = formData.get("role") as "admin" | "therapist";
+    const role = formData.get("role") as "admin" | "fysiotherapeut" | "receptionist";
 
     setError("");
 
     startTransition(async () => {
       const res = await inviteUser(email, role, fullName);
       if (res.success) {
-        setIsInviteModalOpen(false);
+        setGeneratedInviteLink(res.inviteLink || null);
         alert(`Uitnodiging is succesvol verstuurd naar ${email}!`);
       } else {
         setError(res.error || "Er is een onbekende fout opgetreden.");
+        if (res.inviteLink) {
+          setGeneratedInviteLink(res.inviteLink);
+        }
       }
     });
   };
 
-  const handleRoleChange = (userId: string, newRole: "admin" | "therapist") => {
+  const handleRoleChange = (userId: string, newRole: "admin" | "fysiotherapeut" | "receptionist") => {
     startTransition(async () => {
       const res = await updateUserRole(userId, newRole);
       if (!res.success) alert(res.error);
@@ -40,6 +44,25 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
       startTransition(async () => {
         const res = await deleteUser(userId);
         if (!res.success) alert(res.error);
+      });
+    }
+  };
+
+  const handleResetPassword = (email: string | null) => {
+    if (!email) {
+      alert("Deze gebruiker heeft geen e-mailadres ingesteld (of kan niet gevonden worden).");
+      return;
+    }
+    if (confirm(`Weet je zeker dat je het wachtwoord voor ${email} wilt resetten?`)) {
+      startTransition(async () => {
+        const res = await resetUserPassword(email);
+        if (res.success && res.resetLink) {
+          // Open the invite modal but show the reset link instead
+          setGeneratedInviteLink(res.resetLink);
+          setIsInviteModalOpen(true);
+        } else {
+          alert(res.error || "Er is een fout opgetreden bij het genereren van de reset link.");
+        }
       });
     }
   };
@@ -74,8 +97,14 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
                 <div>
                   <h3 className="font-bold text-slate-900">{profile.full_name || "Onbekende Gebruiker"}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${profile.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {profile.role === 'admin' ? 'Beheerder' : 'Behandelaar'}
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                      profile.role === 'admin' ? 'bg-purple-100 text-purple-700' : 
+                      profile.role === 'receptionist' ? 'bg-blue-100 text-blue-700' : 
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {profile.role === 'admin' ? 'Beheerder' : 
+                       profile.role === 'receptionist' ? 'Receptionist' : 
+                       'Fysiotherapeut'}
                     </span>
                     <span className="text-xs text-slate-400">Toegevoegd op {profile.created_at.split('T')[0]}</span>
                   </div>
@@ -90,17 +119,28 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
                     disabled={isPending}
                     className="text-sm border border-slate-200 rounded-lg p-2 focus:ring-primary focus:border-primary text-slate-700 bg-white disabled:opacity-50"
                   >
-                    <option value="therapist">Behandelaar</option>
+                    <option value="fysiotherapeut">Fysiotherapeut</option>
+                    <option value="receptionist">Receptionist</option>
                     <option value="admin">Beheerder</option>
                   </select>
-                  <button 
-                    onClick={() => handleDelete(profile.id, profile.full_name)}
-                    disabled={isPending}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    title="Gebruiker verwijderen"
-                  >
-                    <i className="fa-solid fa-trash-can"></i>
-                  </button>
+                  <div className="flex items-center gap-1 ml-2 border-l border-slate-200 pl-2">
+                    <button 
+                      onClick={() => handleResetPassword(profile.email)}
+                      disabled={isPending}
+                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-50"
+                      title="Wachtwoord reset e-mail sturen"
+                    >
+                      <i className="fa-solid fa-key"></i>
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(profile.id, profile.full_name)}
+                      disabled={isPending}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Gebruiker verwijderen"
+                    >
+                      <i className="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -121,7 +161,34 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
               </div>
             )}
 
-            <form onSubmit={handleInvite} className="space-y-4">
+            {generatedInviteLink && (
+              <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl mb-6 text-sm font-medium border border-emerald-200 shadow-sm">
+                <p className="mb-2 font-bold"><i className="fa-solid fa-link"></i> Handmatige Uitnodigingslink</p>
+                <p className="mb-3 text-emerald-700">Mocht de e-mail niet aankomen (of in de spam belanden), kun je de volgende link kopiëren en zelf via WhatsApp of E-mail doorsturen:</p>
+                <div className="flex gap-2 items-center">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={generatedInviteLink} 
+                    className="flex-1 bg-white border border-emerald-200 rounded-lg p-2 text-xs text-slate-600 focus:outline-none"
+                    onClick={(e) => e.currentTarget.select()}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedInviteLink);
+                      alert("Link gekopieerd!");
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-bold text-xs transition-colors whitespace-nowrap"
+                  >
+                    Kopieer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!generatedInviteLink && (
+              <form onSubmit={handleInvite} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Volledige Naam</label>
                 <input 
@@ -149,8 +216,9 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
                   required
                   className="w-full border border-slate-200 rounded-xl p-3 focus:ring-primary focus:border-primary"
                 >
-                  <option value="therapist">Behandelaar (Alleen CRM gebruiken)</option>
-                  <option value="admin">Beheerder (Toegang tot instellingen & werknemers)</option>
+                  <option value="fysiotherapeut">Fysiotherapeut (Alleen patiënten beheren)</option>
+                  <option value="receptionist">Receptionist (Patiënten & Taken in Kanban)</option>
+                  <option value="admin">Beheerder (Volledige toegang incl. instellingen)</option>
                 </select>
               </div>
 
@@ -172,6 +240,22 @@ export default function WerknemersClient({ initialProfiles, isAdmin }: { initial
                 </button>
               </div>
             </form>
+            )}
+
+            {generatedInviteLink && (
+              <div className="pt-4 flex justify-end">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setIsInviteModalOpen(false);
+                    setGeneratedInviteLink(null);
+                  }}
+                  className="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Sluiten
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}

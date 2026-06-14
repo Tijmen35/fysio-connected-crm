@@ -14,6 +14,7 @@ export async function createPatient(formData: FormData) {
     email: formData.get("email") as string,
     location: formData.get("location") as string,
     primary_complaint: formData.get("klacht") as string,
+    therapist_id: formData.get("assigned_to") as string || null,
   };
   const pipelineKey = formData.get("pipeline_radio") as string;
 
@@ -129,6 +130,7 @@ export async function updatePatient(patientId: string, formData: FormData) {
     email: formData.get("email") as string,
     location: formData.get("location") as string,
     primary_complaint: formData.get("klacht") as string,
+    therapist_id: formData.get("assigned_to") as string || null,
     updated_at: new Date().toISOString(),
   };
 

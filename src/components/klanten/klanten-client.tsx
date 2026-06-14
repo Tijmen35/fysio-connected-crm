@@ -4,7 +4,7 @@ import { useModalStore } from "@/store/modalStore";
 import { PatientProfile } from "@/components/kanban/patient-profile";
 import { useState } from "react";
 
-export function KlantenClient({ patients }: { patients: any[] }) {
+export function KlantenClient({ patients, fysiotherapeuten = [] }: { patients: any[], fysiotherapeuten?: any[] }) {
   const { openNewPatientModal } = useModalStore();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
@@ -42,6 +42,7 @@ export function KlantenClient({ patients }: { patients: any[] }) {
                   <th className="px-6 py-4">Patiënt Naam</th>
                   <th className="px-6 py-4">Telefoon</th>
                   <th className="px-6 py-4">Locatie</th>
+                  <th className="px-6 py-4">Behandelaar</th>
                   <th className="px-6 py-4">Actieve Trajecten</th>
                   <th className="px-6 py-4 text-right">Acties</th>
                 </tr>
@@ -49,7 +50,7 @@ export function KlantenClient({ patients }: { patients: any[] }) {
               <tbody className="divide-y divide-slate-100">
                 {patients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
                       Geen patiënten gevonden.
                     </td>
                   </tr>
@@ -84,6 +85,30 @@ export function KlantenClient({ patients }: { patients: any[] }) {
                           <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-bold">
                             {patient.location || "-"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                          <select 
+                            className="bg-transparent border border-transparent hover:border-slate-200 hover:bg-white focus:bg-white focus:border-primary rounded px-2 py-1.5 text-sm font-semibold text-slate-700 cursor-pointer w-full max-w-[140px] truncate transition-colors"
+                            value={patient.therapist_id || ""}
+                            onChange={async (e) => {
+                              const newTherapistId = e.target.value;
+                              const { updatePatient } = await import("@/app/actions/patient");
+                              const formData = new FormData();
+                              formData.append("name", patient.full_name);
+                              formData.append("phone", patient.phone);
+                              formData.append("email", patient.email || "");
+                              formData.append("location", patient.location || "");
+                              formData.append("klacht", patient.primary_complaint || "");
+                              formData.append("assigned_to", newTherapistId);
+                              await updatePatient(patient.id, formData);
+                              window.location.reload();
+                            }}
+                          >
+                            <option value="">Onbekend</option>
+                            {fysiotherapeuten.map(f => (
+                              <option key={f.id} value={f.id}>{f.full_name}</option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1.5">

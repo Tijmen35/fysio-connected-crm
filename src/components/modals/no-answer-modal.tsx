@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { advanceWorkflow } from "@/app/actions/task";
 
 export function NoAnswerModal() {
-  const { isNoAnswerModalOpen, closeNoAnswerModal, activeTaskId, activePatientName } = useModalStore();
+  const { isNoAnswerModalOpen, closeNoAnswerModal, activeTaskId, activePatientName, activePreviewText } = useModalStore();
   const [isPending, startTransition] = useTransition();
 
   if (!isNoAnswerModalOpen) return null;
@@ -35,10 +35,17 @@ export function NoAnswerModal() {
           <div className="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto text-2xl mb-2">
             <i className="fa-solid fa-paper-plane"></i>
           </div>
-          <h3 className="font-bold text-slate-900 text-xl">WhatsApp & E-mail versturen?</h3>
+          <h3 className="font-bold text-slate-900 text-xl">WhatsApp versturen?</h3>
           <p className="text-sm text-slate-500">
-            {activePatientName} nam niet op. Er wordt nu automatisch een bericht verstuurd om een afspraak te plannen en de taak schuift door.
+            {activePatientName} nam niet op. Er wordt nu automatisch een WhatsApp verstuurd om een afspraak te plannen en de taak schuift door.
           </p>
+          
+          {activePreviewText && (
+            <div className="bg-emerald-50 text-emerald-900 p-3 rounded-xl border border-emerald-200 text-sm italic shadow-sm text-left">
+              "{activePreviewText}"
+            </div>
+          )}
+
           <div className="pt-4 flex gap-3">
             <button 
               onClick={closeNoAnswerModal}

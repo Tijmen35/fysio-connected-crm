@@ -4,7 +4,13 @@ import { useState, useTransition } from "react";
 import { useModalStore } from "@/store/modalStore";
 import { createPatient } from "@/app/actions/patient";
 
-export function NewPatientModal() {
+export function NewPatientModal({ 
+  fysiotherapeuten = [],
+  currentUserProfile = null
+}: { 
+  fysiotherapeuten?: { id: string; full_name: string }[];
+  currentUserProfile?: any;
+}) {
   const { isNewPatientModalOpen, closeNewPatientModal } = useModalStore();
   const [pipeline, setPipeline] = useState("leadopvolging");
   const [klacht, setKlacht] = useState("");
@@ -94,8 +100,14 @@ export function NewPatientModal() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500">Locatie</label>
-                <select name="location" className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold">
+                <label className="text-[10px] font-bold text-slate-500">Locatie <span className="text-red-500">*</span></label>
+                <select 
+                  name="location" 
+                  required
+                  defaultValue=""
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold"
+                >
+                  <option value="" disabled>Kies een locatie...</option>
                   <option value="Fysio Barendrecht">Fysio Barendrecht</option>
                   <option value="Fysio Rhoon">Fysio Rhoon</option>
                   <option value="Fysio Hoefslag">Fysio Hoefslag</option>
@@ -103,10 +115,15 @@ export function NewPatientModal() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-500">Behandelaar</label>
-                <select name="assigned_to" className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2">
-                  <option value="Chris (Fysio)">Chris (Fysio)</option>
-                  <option value="Sanne (Fysio)">Sanne (Fysio)</option>
-                  <option value="Emma (Fysio)">Emma (Fysio)</option>
+                <select 
+                  name="assigned_to" 
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-primary focus:border-primary px-3 py-2 font-semibold"
+                  defaultValue={currentUserProfile?.id || ""}
+                >
+                  <option value="" disabled>Selecteer behandelaar</option>
+                  {fysiotherapeuten.map(fysio => (
+                    <option key={fysio.id} value={fysio.id}>{fysio.full_name}</option>
+                  ))}
                 </select>
               </div>
             </div>

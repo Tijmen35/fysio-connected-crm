@@ -8,7 +8,13 @@ export function Sidebar({ userProfile }: { userProfile?: any }) {
 
   // Haal naam op of gebruik fallback
   const userName = userProfile?.full_name || "Gebruiker";
-  const userRole = userProfile?.role === "admin" ? "Beheerder" : "Behandelaar";
+  const userRole = userProfile?.role || "fysiotherapeut";
+  
+  // Vriendelijke rol weergave
+  let displayRole = "Fysiotherapeut";
+  if (userRole === "admin") displayRole = "Beheerder";
+  if (userRole === "receptionist") displayRole = "Receptionist";
+
   const initial = userName.charAt(0).toUpperCase();
 
   return (
@@ -24,15 +30,18 @@ export function Sidebar({ userProfile }: { userProfile?: any }) {
 
         {/* Navigation menu */}
         <nav className="p-4 space-y-1.5 max-h-[calc(100vh-12rem)] overflow-y-auto">
-          <Link 
-            href="/" 
-            className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-chart-line text-lg w-5"></i>
-            <span>Dashboard</span>
-          </Link>
+          {(userRole === "admin" || userRole === "receptionist") && (
+            <Link 
+              href="/" 
+              className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                pathname === "/" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+              }`}
+            >
+              <i className="fa-solid fa-chart-line text-lg w-5"></i>
+              <span>Dashboard</span>
+            </Link>
+          )}
+
           <Link 
             href="/klanten" 
             className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
@@ -42,85 +51,94 @@ export function Sidebar({ userProfile }: { userProfile?: any }) {
             <i className="fa-solid fa-user-group text-lg w-5"></i>
             <span>Patiënten</span>
           </Link>
-          <Link 
-            href="/bellijsten" 
-            className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/bellijsten" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-phone-volume text-lg w-5"></i>
-            <span>Bellijsten</span>
-          </Link>
-          <Link 
-            href="/werknemers" 
-            className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/werknemers" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-users text-lg w-5"></i>
-            <span>Werknemers</span>
-          </Link>
-          <Link 
-            href="/integraties" 
-            className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/integraties" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-plug text-lg w-5"></i>
-            <span>Integraties</span>
-          </Link>
-          <Link 
-            href="/instellingen" 
-            className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-              pathname === "/instellingen" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-code-branch w-5"></i>
-            <span>Workflows</span>
-          </Link>
+
+          {(userRole === "admin") && (
+            <>
+              <Link 
+                href="/bellijsten" 
+                className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  pathname === "/bellijsten" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-phone-volume text-lg w-5"></i>
+                <span>Bellijsten</span>
+              </Link>
+              <Link 
+                href="/werknemers" 
+                className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  pathname === "/werknemers" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-users text-lg w-5"></i>
+                <span>Werknemers</span>
+              </Link>
+              <Link 
+                href="/integraties" 
+                className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  pathname === "/integraties" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-plug text-lg w-5"></i>
+                <span>Integraties</span>
+              </Link>
+              <Link 
+                href="/instellingen" 
+                className={`nav-item group flex items-center gap-3.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  pathname === "/instellingen" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-code-branch w-5"></i>
+                <span>Workflows</span>
+              </Link>
+            </>
+          )}
 
 
-          {/* Pipelines Section */}
-          <div className="pt-4 pb-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Pipelines
-          </div>
+          {(userRole === "admin" || userRole === "receptionist") && (
+            <>
+              {/* Pipelines Section */}
+              <div className="pt-4 pb-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Pipelines
+              </div>
 
-          <Link 
-            href="/pipelines/leadopvolging" 
-            className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
-              pathname === "/pipelines/leadopvolging" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-filter text-base w-4"></i>
-            <span>Leadopvolging</span>
-          </Link>
-          <Link 
-            href="/pipelines/noshows" 
-            className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
-              pathname === "/pipelines/noshows" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-user-slash text-base w-4"></i>
-            <span>No-shows & Zieken</span>
-          </Link>
-          <Link 
-            href="/pipelines/nazorg" 
-            className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
-              pathname === "/pipelines/nazorg" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-comment-medical text-base w-4"></i>
-            <span>Nazorg (Uitbehandeld)</span>
-          </Link>
-          <Link 
-            href="/pipelines/fysiofit" 
-            className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
-              pathname === "/pipelines/fysiofit" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <i className="fa-solid fa-dumbbell text-base w-4"></i>
-            <span>Nazorg (Doel + FysioFit)</span>
-          </Link>
+              <Link 
+                href="/pipelines/leadopvolging" 
+                className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === "/pipelines/leadopvolging" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-filter text-base w-4"></i>
+                <span>Leadopvolging</span>
+              </Link>
+              <Link 
+                href="/pipelines/noshows" 
+                className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === "/pipelines/noshows" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-user-slash text-base w-4"></i>
+                <span>No-shows & Zieken</span>
+              </Link>
+              <Link 
+                href="/pipelines/nazorg" 
+                className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === "/pipelines/nazorg" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-comment-medical text-base w-4"></i>
+                <span>Nazorg (Uitbehandeld)</span>
+              </Link>
+              <Link 
+                href="/pipelines/fysiofit" 
+                className={`nav-item group flex items-center gap-3 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === "/pipelines/fysiofit" ? "bg-primary text-slate-900 shadow-glow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <i className="fa-solid fa-dumbbell text-base w-4"></i>
+                <span>Nazorg (Doel + FysioFit)</span>
+              </Link>
+            </>
+          )}
         </nav>
       </div>
 
@@ -130,7 +148,7 @@ export function Sidebar({ userProfile }: { userProfile?: any }) {
           <div className="w-10 h-10 rounded-full border border-slate-700 bg-slate-800 flex items-center justify-center text-white">{initial}</div>
           <div className="overflow-hidden">
             <p className="text-sm font-semibold text-white truncate">{userName}</p>
-            <p className="text-xs text-slate-400 truncate">{userRole}</p>
+            <p className="text-xs text-slate-400 truncate">{displayRole}</p>
           </div>
         </div>
         <button 

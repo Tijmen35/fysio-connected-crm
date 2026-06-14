@@ -23,6 +23,11 @@ export default async function KlantenPage() {
     `)
     .order("created_at", { ascending: false });
 
+  const { data: fysiotherapeuten } = await adminAuthClient
+    .from("profiles")
+    .select("id, full_name")
+    .eq("role", "fysiotherapeut");
+
   if (error) {
     console.error("Error fetching patients:", error);
   }
@@ -34,5 +39,5 @@ export default async function KlantenPage() {
     return !hasOnlyBelvoorraad;
   }) || [];
 
-  return <KlantenClient patients={visiblePatients} />;
+  return <KlantenClient patients={visiblePatients} fysiotherapeuten={fysiotherapeuten || []} />;
 }

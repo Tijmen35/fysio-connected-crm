@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { KanbanBoard } from "@/components/kanban/board";
 import { createClient } from "@/utils/supabase/server";
+import { getWhatsAppTemplates } from "@/lib/whatsapp";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -37,11 +39,16 @@ export default async function DashboardPage() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    const { data } = await adminAuthClient.from("profiles").select("full_name").eq("id", user.id).single();
+    const { data } = await adminAuthClient.from("profiles").select("full_name, role").eq("id", user.id).single();
+    if (data?.role === "fysiotherapeut") {
+      redirect("/klanten");
+    }
     if (data?.full_name) {
       userName = data.full_name.split(' ')[0];
     }
   }
+
+  const waTemplates = await getWhatsAppTemplates();
 
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 h-[calc(100vh-4rem)]">
@@ -50,6 +57,7 @@ export default async function DashboardPage() {
         templates={templates || []} 
         userName={userName} 
         bellijsten={bellijstContacts || []}
+        waTemplates={waTemplates}
       />
     </div>
   );

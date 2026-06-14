@@ -7,7 +7,7 @@ import Link from "next/link";
 
 import { useModalStore } from "@/store/modalStore";
 
-function TaskCard({ task, templates = [], onClick, onViewScript }: { task: any, templates?: any[], onClick: () => void, onViewScript?: () => void }) {
+function TaskCard({ task, templates = [], waTemplates = [], onClick, onViewScript }: { task: any, templates?: any[], waTemplates?: any[], onClick: () => void, onViewScript?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const patientName = task.patient?.full_name || task.patient?.name || task.patientName;
   let pipelineName = task.pipeline_name || "";
@@ -140,7 +140,16 @@ function TaskCard({ task, templates = [], onClick, onViewScript }: { task: any, 
                 );
 
                 if (hasTemplate) {
-                  openNoAnswerModal(task.id, patientName);
+                  const noAnswerTpl = templates.find((t: any) => t.pipeline_name === pipelineName && t.step_index === stepIndex && t.action_type === "niet_opgenomen");
+                  let previewText = "";
+                  if (noAnswerTpl && noAnswerTpl.whatsapp_template) {
+                    const waTpl = waTemplates.find((w: any) => w.name === noAnswerTpl.whatsapp_template);
+                    if (waTpl) {
+                      const bodyComp = waTpl.components?.find((c: any) => c.type === "BODY" || c.type === "body");
+                      if (bodyComp) previewText = bodyComp.text;
+                    }
+                  }
+                  openNoAnswerModal(task.id, patientName, previewText);
                 } else {
                   // Directly advance without modal
                   startTransition(async () => {
@@ -174,7 +183,7 @@ function TaskCard({ task, templates = [], onClick, onViewScript }: { task: any, 
   );
 }
 
-export function KanbanBoard({ initialTasks = [], templates = [], userName = "Collega", bellijsten = [] }: { initialTasks?: any[], templates?: any[], userName?: string, bellijsten?: any[] }) {
+export function KanbanBoard({ initialTasks = [], templates = [], waTemplates = [], userName = "Collega", bellijsten = [] }: { initialTasks?: any[], templates?: any[], waTemplates?: any[], userName?: string, bellijsten?: any[] }) {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [viewScript, setViewScript] = useState<string | null>(null);
 
@@ -303,7 +312,7 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {TASKS.vandaagOchtend.map(task => <TaskCard key={task.id} task={task} templates={templates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
+                    {TASKS.vandaagOchtend.map(task => <TaskCard key={task.id} task={task} templates={templates} waTemplates={waTemplates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
                   </div>
                 </div>
 
@@ -319,7 +328,7 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {TASKS.vandaagMiddag.map(task => <TaskCard key={task.id} task={task} templates={templates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
+                    {TASKS.vandaagMiddag.map(task => <TaskCard key={task.id} task={task} templates={templates} waTemplates={waTemplates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
                   </div>
                 </div>
               </div>
@@ -336,7 +345,7 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {TASKS.morgen.map(task => <TaskCard key={task.id} task={task} templates={templates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
+                  {TASKS.morgen.map(task => <TaskCard key={task.id} task={task} templates={templates} waTemplates={waTemplates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
                 </div>
               </div>
 
@@ -357,7 +366,7 @@ export function KanbanBoard({ initialTasks = [], templates = [], userName = "Col
                       <span className="text-xs font-semibold">Geen taken</span>
                     </div>
                   )}
-                  {TASKS.overmorgen.map(task => <TaskCard key={task.id} task={task} templates={templates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
+                  {TASKS.overmorgen.map(task => <TaskCard key={task.id} task={task} templates={templates} waTemplates={waTemplates} onClick={() => setSelectedPatientId(task.patient_id || task.patientId)} />)}
                 </div>
               </div>
 

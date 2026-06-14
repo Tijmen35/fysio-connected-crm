@@ -53,10 +53,11 @@ export async function POST(
     }
 
     // NEW: Check if the incoming form name matches the configured form name
-    // Webflow sends the form name in body.name
-    if (body.name && config.name) {
-      if (body.name.toLowerCase().trim() !== config.name.toLowerCase().trim()) {
-        console.log(`Ignoring form submission. Expected form: '${config.name}', but got: '${body.name}'`);
+    // Webflow sends the form name in payloadObj.name
+    const incomingFormName = payloadObj.name;
+    if (config.name && config.name.trim() !== "") {
+      if (!incomingFormName || incomingFormName.toLowerCase().trim() !== config.name.toLowerCase().trim()) {
+        console.log(`Ignoring form submission. Expected form: '${config.name}', but got: '${incomingFormName}'`);
         return NextResponse.json({ success: true, message: "Ignored (Form name mismatch)" });
       }
     }
